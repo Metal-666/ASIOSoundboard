@@ -2,8 +2,9 @@
 
 This is a simple soundboard app built using C# and Flutter. Lets you play audio clips into any ASIO device using hotkeys. Recommended to use together with AutoHotkey and JackRouter.
 
-<img src="img/screenshots/board_1.png" width="45%" />
-<img src="img/screenshots/settings_1.png" width="45%" />
+Board | Settings
+-|-
+![screenshot_board](img/screenshots/board_1.png) | ![screenshot_settings](img/screenshots/settings_1.png)
 
 ## Features
 
