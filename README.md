@@ -28,6 +28,7 @@ When the app is running, go to Settings and select an Audio Device you want to u
 - Clone the repository
 - Make sure you have the latest Flutter SDK and .NET 6 installed
 - Open the terminal in 'flutter-ui' directory (located inside C# project folder)
+- Run `flutter pub get`
 - Run `flutter build web`. Note: this might fail if you placed the project on a network drive. If it fails, move the project to a local drive, or create a symlink pointing to it
 - Open C# solution
 - Set Configuration to 'Release'
