@@ -1,0 +1,12 @@
+{
+    "profiles": {
+        "no-ui": {
+            "commandName": "Project",
+            "commandLineArgs": "--no-ui"
+        },
+        "main": {
+            "commandName": "Project",
+            "commandLineArgs": ""
+        }
+    }
+}

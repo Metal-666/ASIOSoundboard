@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <Configurations>Debug;Release;Debug (No UI)</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EmbedIO" Version="3.4.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1133-prerelease" />
+    <PackageReference Include="NAudio" Version="2.0.1" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /E /Y &quot;$(ProjectDir)flutter-ui\build\web&quot; &quot;$(TargetDir)flutter-ui\&quot;&#xD;&#xA;xcopy &quot;$(SolutionDir)ASIOSoundboard.ahk&quot; &quot;$(TargetDir)ahk-scripts\&quot;" />
+  </Target>
+
+</Project>

@@ -1,0 +1,18 @@
+name: asio_soundboard
+
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc:
+  web_socket_channel:
+
+dev_dependencies:
+  flutter_lints:
+
+flutter:
+  uses-material-design: true
