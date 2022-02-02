@@ -1,6 +1,6 @@
 # ASIO Soundboard
 
-This is a simple soundboard app built using C# and Flutter. Lets you play audio clips into any ASIO device using hotkeys. Recommended to use together with AutoHotkey and JackRouter.
+This is a simple soundboard app built using C# and Flutter. Lets you play audio clips into any ASIO device using hotkeys. Recommended to use together with [AutoHotkey](https://www.autohotkey.com/) and [JackRouter](https://jackaudio.org/faq/jack_on_windows.html).
 
 Board | Settings
 -|-
@@ -17,15 +17,16 @@ Board | Settings
 
 ## Installation and Usage
 
-- Download the lates release (.zip file) from the Releases panel
+- Download the [latest release](../../releases/latest)
 - Unzip the archive
 - Launch the app
 
-When the app is running, go to Settings and select an Audio Device you want to use for playback. Then select the Sample Rate your device is working at (to set or see your device's sample rate, find and open it's control panel). After that hit the Start button at the top-right of the app window. If everything is done correctly, the text in top-left will say that the Audio Engine is working. You can hit the button again to stop it at any time. Now you can actually play the sounds by navigating to Board and hitting the + button in bottom-right. Use the dialog to add a sound, when done click the tile that just appeared and you will hear the sound you selected. You can also right-click the tile to open it's menu.
+When the app is running, go to Settings and select an Audio Device you want to use for playback. Then select the Sample Rate your device is working at (to set or see your device's sample rate, find and open its control panel). After that hit the Start button at the top-right of the app window. If everything is done correctly, the text in top-left will say that the Audio Engine is working. You can hit the button again to stop it at any time. Now you can actually play the sounds by navigating to Board and hitting the + button in bottom-right. Use the dialog to add a sound, when done click the tile that just appeared and you will hear the sound you selected. You can also right-click the tile to open its menu.
     
 ## Building
 
 - Clone the repository
+- Make sure `main` or `beta` branch is selected
 - Make sure you have the latest Flutter SDK and .NET 6 installed
 - Open the terminal in 'flutter-ui' directory (located inside C# project folder)
 - Run `flutter pub get`
