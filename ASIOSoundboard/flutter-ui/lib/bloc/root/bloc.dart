@@ -16,6 +16,8 @@ class RootBloc extends Bloc<RootEvent, RootState> {
     // When the bloc is created (which means that the UI is almost loaded), connect to the host.
     _clientRepository.connect();
 
+    _clientRepository.restoreTileSize();
+
     // Start listening to the host events. We are mainly interested in global changes like stopping and starting the Audio Engine, and also errors and other notifications.
     _subscription = _clientRepository.eventStream.stream
         .listen((client_events.ClientEvent event) => add(ClientEvent(event)));
@@ -46,6 +48,11 @@ class RootBloc extends Bloc<RootEvent, RootState> {
                 sampleRate: event.event.data?.sampleRate)));
             break;
           }
+        case client_events.EventTypes.restoreTileSize:
+          {
+            emit(state.changeTileSize(event.event.data?.size ?? 1));
+            break;
+          }
         default:
       }
     });
@@ -59,6 +66,8 @@ class RootBloc extends Bloc<RootEvent, RootState> {
         _clientRepository.resampleFile(event.file, event.sampleRate));
     on<TileSizeChanged>(
         (event, emit) => emit(state.changeTileSize(event.tileSize)));
+    on<TileSizeChangedFinal>(
+        (event, emit) => _clientRepository.saveTileSize(event.tileSize));
   }
 
   @override

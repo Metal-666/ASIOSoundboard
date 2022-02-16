@@ -99,6 +99,11 @@ class ClientRepository {
               type = EventTypes.deleteTile;
               break;
             }
+          case 'restore_tile_size':
+            {
+              type = EventTypes.restoreTileSize;
+              break;
+            }
         }
 
         eventStream.add(ClientEvent(type, messageData));
@@ -183,6 +188,17 @@ class ClientRepository {
     _sendMessage(EventTypes.loadSoundboard);
   }
 
+  void saveTileSize(double tileSize) {
+    debugPrint('Saving tile size...');
+    _sendMessage(EventTypes.saveTileSize,
+        data: EventData.setTileSize(tileSize));
+  }
+
+  void restoreTileSize() {
+    debugPrint('Restoring tile size...');
+    _sendMessage(EventTypes.restoreTileSize);
+  }
+
   void _sendMessage(EventTypes event, {EventData? data}) {
     if (_channel?.closeCode == null) {
       String eventType = 'unknown';
@@ -257,6 +273,16 @@ class ClientRepository {
         case EventTypes.loadSoundboard:
           {
             eventType = 'load_soundboard';
+            break;
+          }
+        case EventTypes.saveTileSize:
+          {
+            eventType = 'save_tile_size';
+            break;
+          }
+        case EventTypes.restoreTileSize:
+          {
+            eventType = 'restore_tile_size';
             break;
           }
         default:

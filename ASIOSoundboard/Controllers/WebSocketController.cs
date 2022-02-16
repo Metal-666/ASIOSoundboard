@@ -370,6 +370,28 @@ namespace ASIOSoundboard.Controllers {
 
 					}
 
+					case "save_tile_size": {
+
+						Properties.Settings.Default.TileSize = data?["size"].GetDouble() ?? 1;
+
+						Properties.Settings.Default.Save();
+
+						break;
+					
+					}
+
+					case "restore_tile_size": {
+
+						SendMessage("restore_tile_size", new Dictionary<string, dynamic?>() {
+
+							{ "size", Properties.Settings.Default.TileSize }
+
+						});
+
+						break;
+
+					}
+
 				}
 			
 			}

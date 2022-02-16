@@ -26,8 +26,16 @@ class FileResampleRequested extends RootEvent {
   FileResampleRequested(this.file, this.sampleRate);
 }
 
-class TileSizeChanged extends RootEvent {
+abstract class TileSizeEvent extends RootEvent {
   final double tileSize;
 
-  TileSizeChanged(this.tileSize);
+  TileSizeEvent(this.tileSize);
+}
+
+class TileSizeChanged extends TileSizeEvent {
+  TileSizeChanged(double tileSize) : super(tileSize);
+}
+
+class TileSizeChangedFinal extends TileSizeEvent {
+  TileSizeChangedFinal(double tileSize) : super(tileSize);
 }

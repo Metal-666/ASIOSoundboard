@@ -128,6 +128,8 @@ class SettingsView extends StatelessWidget {
                   }
                 }(),
                 value: state.tileSize,
+                onChangeEnd: (double value) =>
+                    context.read<RootBloc>().add(TileSizeChangedFinal(value)),
                 onChanged: (double value) =>
                     context.read<RootBloc>().add(TileSizeChanged(value)))
           ],

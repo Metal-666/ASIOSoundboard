@@ -30,7 +30,9 @@ enum EventTypes {
   stopAllSounds,
   deleteTile,
   saveSoundboard,
-  loadSoundboard
+  loadSoundboard,
+  saveTileSize,
+  restoreTileSize
 }
 
 /// Holds the data of a message.
@@ -56,6 +58,7 @@ class EventData {
   String? id;
 
   double? volume;
+  double? size;
 
   EventData(
       {this.error,
@@ -68,7 +71,8 @@ class EventData {
       this.soundboard,
       this.name,
       this.id,
-      this.volume});
+      this.volume,
+      this.size});
 
   EventData.audioEngineError(this.error, this.description);
   EventData.listAudioDevices(this.audioDevices);
@@ -79,6 +83,7 @@ class EventData {
   EventData.validateNewTile(this.file, this.name, this.volume);
   EventData.resampleFile(this.file, this.sampleRate);
   EventData.setGlobalVolume(this.volume);
+  EventData.setTileSize(this.size);
 
   Map<String, dynamic> toMap() => {
         'error': error,
@@ -91,7 +96,8 @@ class EventData {
         'soundboard': soundboard?.toMap(),
         'name': name,
         'id': id,
-        'volume': volume
+        'volume': volume,
+        'size': size
       };
 
   factory EventData.fromMap(Map<String, dynamic> map) => EventData(
@@ -107,7 +113,8 @@ class EventData {
           : null,
       name: map['name'],
       id: map['id'],
-      volume: map['volume']?.toDouble());
+      volume: map['volume']?.toDouble(),
+      size: map['size']?.toDouble());
 
   String toJson() => json.encode(toMap());
 
