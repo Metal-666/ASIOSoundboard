@@ -46,5 +46,28 @@ namespace ASIOSoundboard.Properties {
                 this["GlobalVolume"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AudioDevice {
+            get {
+                return ((string)(this["AudioDevice"]));
+            }
+            set {
+                this["AudioDevice"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Nullable<System.Int32> SampleRate {
+            get {
+                return ((global::System.Nullable<System.Int32>)(this["SampleRate"]));
+            }
+            set {
+                this["SampleRate"] = value;
+            }
+        }
     }
 }

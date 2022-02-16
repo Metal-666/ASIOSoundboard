@@ -109,6 +109,16 @@ class ClientRepository {
               type = EventTypes.restoreGlobalVolume;
               break;
             }
+          case 'restore_audio_device':
+            {
+              type = EventTypes.restoreAudioDevice;
+              break;
+            }
+          case 'restore_sample_rate':
+            {
+              type = EventTypes.restoreSampleRate;
+              break;
+            }
         }
 
         eventStream.add(ClientEvent(type, messageData));
@@ -215,6 +225,16 @@ class ClientRepository {
     _sendMessage(EventTypes.restoreGlobalVolume);
   }
 
+  void restoreAudioDevice() {
+    debugPrint('Restoring audio device...');
+    _sendMessage(EventTypes.restoreAudioDevice);
+  }
+
+  void restoreSampleRate() {
+    debugPrint('Restoring sample rate...');
+    _sendMessage(EventTypes.restoreSampleRate);
+  }
+
   void _sendMessage(EventTypes event, {EventData? data}) {
     if (_channel?.closeCode == null) {
       String eventType = 'unknown';
@@ -309,6 +329,16 @@ class ClientRepository {
         case EventTypes.restoreGlobalVolume:
           {
             eventType = 'restore_global_volume';
+            break;
+          }
+        case EventTypes.restoreAudioDevice:
+          {
+            eventType = 'restore_audio_device';
+            break;
+          }
+        case EventTypes.restoreSampleRate:
+          {
+            eventType = 'restore_sample_rate';
             break;
           }
         default:

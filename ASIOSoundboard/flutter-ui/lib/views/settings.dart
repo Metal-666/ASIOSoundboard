@@ -58,7 +58,7 @@ class SettingsView extends StatelessWidget {
             children: <Widget>[
               const Text('ASIO Device'),
               DropdownButton<String>(
-                  value: state.asioDevice,
+                  value: state.asioDevice == '' ? null : state.asioDevice,
                   items: state.asioDevices
                       ?.map<DropdownMenuItem<String>>((String? value) =>
                           DropdownMenuItem(

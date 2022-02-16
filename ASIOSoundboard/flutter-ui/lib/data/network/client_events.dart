@@ -34,7 +34,9 @@ enum EventTypes {
   saveTileSize,
   restoreTileSize,
   saveGlobalVolume,
-  restoreGlobalVolume
+  restoreGlobalVolume,
+  restoreAudioDevice,
+  restoreSampleRate
 }
 
 /// Holds the data of a message.

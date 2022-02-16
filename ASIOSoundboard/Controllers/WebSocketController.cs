@@ -52,11 +52,19 @@ namespace ASIOSoundboard.Controllers {
 
 			SendMessage("set_audio_device", args);
 
+			Properties.Settings.Default.AudioDevice = args.Device;
+
+			Properties.Settings.Default.Save();
+
 		}
 
 		private void SampleRateChangedHandler(object? sender, SampleRateChangedEventArgs args) {
 
 			SendMessage("set_sample_rate", args);
+
+			Properties.Settings.Default.SampleRate = args.SampleRate;
+
+			Properties.Settings.Default.Save();
 
 		}
 
@@ -415,6 +423,30 @@ namespace ASIOSoundboard.Controllers {
 						SendMessage("restore_global_volume", new Dictionary<string, dynamic?>() {
 
 							{ "volume", Properties.Settings.Default.GlobalVolume }
+
+						});
+
+						break;
+
+					}
+
+					case "restore_audio_device": {
+
+						SendMessage("restore_audio_device", new Dictionary<string, dynamic?>() {
+
+							{ "audio_device", Properties.Settings.Default.AudioDevice }
+
+						});
+
+						break;
+
+					}
+
+					case "restore_sample_rate": {
+
+						SendMessage("restore_sample_rate", new Dictionary<string, dynamic?>() {
+
+							{ "sample_rate", Properties.Settings.Default.SampleRate }
 
 						});
 

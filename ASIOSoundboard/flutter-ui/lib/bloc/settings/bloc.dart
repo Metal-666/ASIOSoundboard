@@ -20,6 +20,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       ..listAudioDevices()
       ..listSampleRates();
 
+    _clientRepository.restoreAudioDevice();
+    _clientRepository.restoreSampleRate();
+
     _clientRepository.restoreGlobalVolume();
 
     // Start listening to the host events. We mainly want to know when the lists requested above arrive and when an Audio Device or Sample Rate updates are processed by the server.
@@ -43,6 +46,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             break;
           }
         case client_events.EventTypes.setAudioDevice:
+        case client_events.EventTypes.restoreAudioDevice:
           {
             debugPrint(
                 'Received Audio Device: ${event.event.data?.audioDevice}');
@@ -50,6 +54,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             break;
           }
         case client_events.EventTypes.setSampleRate:
+        case client_events.EventTypes.restoreSampleRate:
           {
             debugPrint('Received Sample Rate: ${event.event.data?.sampleRate}');
             emit(state.changeSampleRate(event.event.data?.sampleRate));
