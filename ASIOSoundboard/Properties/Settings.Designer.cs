@@ -34,5 +34,17 @@ namespace ASIOSoundboard.Properties {
                 this["TileSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public double GlobalVolume {
+            get {
+                return ((double)(this["GlobalVolume"]));
+            }
+            set {
+                this["GlobalVolume"] = value;
+            }
+        }
     }
 }

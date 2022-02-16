@@ -400,6 +400,28 @@ namespace ASIOSoundboard.Controllers {
 
 					}
 
+					case "save_global_volume": {
+
+						Properties.Settings.Default.GlobalVolume = data?["volume"].GetDouble() ?? 1;
+
+						Properties.Settings.Default.Save();
+
+						break;
+
+					}
+
+					case "restore_global_volume": {
+
+						SendMessage("restore_global_volume", new Dictionary<string, dynamic?>() {
+
+							{ "volume", Properties.Settings.Default.GlobalVolume }
+
+						});
+
+						break;
+
+					}
+
 				}
 			
 			}

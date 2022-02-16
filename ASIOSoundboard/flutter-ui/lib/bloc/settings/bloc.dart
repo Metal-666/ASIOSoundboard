@@ -20,6 +20,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       ..listAudioDevices()
       ..listSampleRates();
 
+    _clientRepository.restoreGlobalVolume();
+
     // Start listening to the host events. We mainly want to know when the lists requested above arrive and when an Audio Device or Sample Rate updates are processed by the server.
     _subscription = _clientRepository.eventStream.stream
         .listen((client_events.ClientEvent event) => add(ClientEvent(event)));
@@ -53,6 +55,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             emit(state.changeSampleRate(event.event.data?.sampleRate));
             break;
           }
+        case client_events.EventTypes.restoreGlobalVolume:
+          {
+            emit(state.changeGlobalVolume(event.event.data?.volume ?? 1));
+            break;
+          }
         default:
       }
     });
@@ -71,6 +78,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         _clientRepository.setGlobalVolume(event.volume);
       }
     });
+    on<VolumeChangedFinal>(
+        (event, emit) => _clientRepository.saveGlobalVolume(event.volume));
   }
 
   @override

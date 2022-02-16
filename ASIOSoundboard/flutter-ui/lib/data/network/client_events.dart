@@ -32,7 +32,9 @@ enum EventTypes {
   saveSoundboard,
   loadSoundboard,
   saveTileSize,
-  restoreTileSize
+  restoreTileSize,
+  saveGlobalVolume,
+  restoreGlobalVolume
 }
 
 /// Holds the data of a message.

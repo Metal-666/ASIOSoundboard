@@ -21,8 +21,16 @@ class ASIODeviceChanged extends SettingsEvent {
   ASIODeviceChanged(this.asioDevice);
 }
 
-class VolumeChanged extends SettingsEvent {
+abstract class VolumeEvent extends SettingsEvent {
   final double volume;
 
-  VolumeChanged(this.volume);
+  VolumeEvent(this.volume);
+}
+
+class VolumeChanged extends VolumeEvent {
+  VolumeChanged(double volume) : super(volume);
+}
+
+class VolumeChangedFinal extends VolumeEvent {
+  VolumeChangedFinal(double volume) : super(volume);
 }

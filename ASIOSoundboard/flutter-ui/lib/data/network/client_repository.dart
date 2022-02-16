@@ -104,6 +104,11 @@ class ClientRepository {
               type = EventTypes.restoreTileSize;
               break;
             }
+          case 'restore_global_volume':
+            {
+              type = EventTypes.restoreGlobalVolume;
+              break;
+            }
         }
 
         eventStream.add(ClientEvent(type, messageData));
@@ -199,6 +204,17 @@ class ClientRepository {
     _sendMessage(EventTypes.restoreTileSize);
   }
 
+  void saveGlobalVolume(double volume) {
+    debugPrint('Saving global volume...');
+    _sendMessage(EventTypes.saveGlobalVolume,
+        data: EventData.setGlobalVolume(volume));
+  }
+
+  void restoreGlobalVolume() {
+    debugPrint('Restoring global volume...');
+    _sendMessage(EventTypes.restoreGlobalVolume);
+  }
+
   void _sendMessage(EventTypes event, {EventData? data}) {
     if (_channel?.closeCode == null) {
       String eventType = 'unknown';
@@ -283,6 +299,16 @@ class ClientRepository {
         case EventTypes.restoreTileSize:
           {
             eventType = 'restore_tile_size';
+            break;
+          }
+        case EventTypes.saveGlobalVolume:
+          {
+            eventType = 'save_global_volume';
+            break;
+          }
+        case EventTypes.restoreGlobalVolume:
+          {
+            eventType = 'restore_global_volume';
             break;
           }
         default:

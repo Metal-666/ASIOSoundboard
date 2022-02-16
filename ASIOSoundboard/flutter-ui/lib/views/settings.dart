@@ -88,6 +88,9 @@ class SettingsView extends StatelessWidget {
                       max: 2,
                       label: (() => '${(state.volume * 100).toInt()}%')(),
                       value: state.volume,
+                      onChangeEnd: (double value) => context
+                          .read<SettingsBloc>()
+                          .add(VolumeChangedFinal(value)),
                       onChanged: (double value) => context
                           .read<SettingsBloc>()
                           .add(VolumeChanged(value)))
