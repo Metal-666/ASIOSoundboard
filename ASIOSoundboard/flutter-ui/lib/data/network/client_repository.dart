@@ -23,7 +23,7 @@ class ClientRepository {
         debugPrint('Received a message: $json');
 
         Map<String, dynamic> message = jsonDecode(json);
-        EventData messageData = EventData.fromJson(message['data']);
+        EventData messageData = EventData.fromMap(message['data']);
 
         EventTypes type = EventTypes.unknown;
 

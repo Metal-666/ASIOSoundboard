@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static ASIOSoundboard.Audio.AudioManager;
@@ -20,6 +22,12 @@ namespace ASIOSoundboard.Controllers {
 		private readonly ILogger logger;
 
 		private readonly AudioManager audioManager;
+
+		private static readonly JsonSerializerOptions jsonSerializerOptions = new () {
+
+			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+
+		};
 
 		public WebSocketController(string urlPath, AudioManager audioManager, ILogger logger) : base(urlPath, true) {
 
@@ -42,25 +50,25 @@ namespace ASIOSoundboard.Controllers {
 
 		private void AudioDeviceChangedHandler(object? sender, AudioDeviceChangedEventArgs args) {
 
-			SendMessage("set_audio_device", JsonSerializer.Serialize(args));
+			SendMessage("set_audio_device", args);
 
 		}
 
 		private void SampleRateChangedHandler(object? sender, SampleRateChangedEventArgs args) {
 
-			SendMessage("set_sample_rate", JsonSerializer.Serialize(args));
+			SendMessage("set_sample_rate", args);
 
 		}
 
 		private void ASIOErrorHandler(object? sender, ASIOErrorEventArgs args) {
 
-			SendMessage("audio_engine_error", JsonSerializer.Serialize(args));
+			SendMessage("audio_engine_error", args);
 
 		}
 
 		private void FileLoadErrorHandler(object? sender, FileErrorEventArgs args) {
 
-			SendMessage("file_load_error", JsonSerializer.Serialize(args));
+			SendMessage("file_load_error", args);
 
 		}
 
@@ -72,7 +80,7 @@ namespace ASIOSoundboard.Controllers {
 
 		private void FileResampleHandler(object? sender, FileResampleEventArgs args) {
 
-			SendMessage("file_resample_needed", JsonSerializer.Serialize(args));
+			SendMessage("file_resample_needed", args);
 
 		}
 
@@ -233,7 +241,7 @@ namespace ASIOSoundboard.Controllers {
 
 						}
 
-						SendMessage("validate_new_tile", JsonSerializer.Serialize(tile));
+						SendMessage("validate_new_tile", tile);
 
 						break;
 
@@ -405,11 +413,7 @@ namespace ASIOSoundboard.Controllers {
 		/// </summary>
 		/// <param name="type">Message type.</param>
 		/// <returns>Something.</returns>
-		private Task SendMessage(string type) {
-
-			return SendMessage(type, "{}");
-
-		}
+		private Task SendMessage(string type) => SendMessage(type, new Dictionary<string, dynamic>());
 
 		/// <summary>
 		/// Sends a message with data to the client.
@@ -417,30 +421,18 @@ namespace ASIOSoundboard.Controllers {
 		/// <param name="type">Message type.</param>
 		/// <param name="data">Key-value pairs of data, will be serialized to JSON when sending.</param>
 		/// <returns>Something.</returns>
-		private Task SendMessage(string type, Dictionary<string, dynamic?> data) {
+		private Task SendMessage(string type, dynamic? data) {
 
-			return SendMessage(type, JsonSerializer.Serialize(data));
-
-		}
-
-		/// <summary>
-		/// Sends a message with data to the client.
-		/// </summary>
-		/// <param name="type">Message type.</param>
-		/// <param name="data">A string of data.</param>
-		/// <returns>Something.</returns>
-		private Task SendMessage(string type, string? data) {
-
-			string payload = JsonSerializer.Serialize(new Dictionary<string, dynamic?>() {
+			string message = JsonSerializer.Serialize(new Dictionary<string, dynamic?>() {
 
 				{ "type", type },
 				{ "data", data }
 
-			});
+			}, jsonSerializerOptions);
 
-			logger.LogInformation("Sending a message to the client: {}", payload);
+			logger.LogInformation("Sending a message to the client: {}", message);
 
-			return BroadcastAsync(payload);
+			return BroadcastAsync(message);
 
 		}
 
