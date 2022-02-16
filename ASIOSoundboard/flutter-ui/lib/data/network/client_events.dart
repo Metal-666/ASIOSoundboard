@@ -116,7 +116,12 @@ class EventData {
       volume: map['volume']?.toDouble(),
       size: map['size']?.toDouble());
 
-  String toJson() => json.encode(toMap());
+  String toJson() {
+    Map<String, dynamic> result = toMap();
+    result.removeWhere((key, value) => value == null);
+
+    return json.encode(result);
+  }
 
   factory EventData.fromJson(String source) =>
       EventData.fromMap(json.decode(source));
