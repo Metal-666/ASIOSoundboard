@@ -1,0 +1,66 @@
+#!java --source 11
+
+import java.io.*;
+//import java.util.Scanner;
+
+public class Hook {
+
+	public static void main(String[] args) {
+		
+		//String currentBranch = runCommand("git rev-parse --abbrev-ref HEAD");
+
+		/*
+
+		Pre-commit checks...
+		...
+
+            System.out.println("Doing stuff...");
+        
+        ...
+
+		If everything is fine:
+
+			System.exit(0);
+
+		else:
+
+			System.exit(1);
+
+		*/
+
+    }
+
+	//Starts a new process with the specified command and returns its result (or null, if an exception was caught)
+	public static String runCommand(String command) {
+
+		try {
+
+			Process child = Runtime.getRuntime().exec(command);
+			InputStream in = child.getInputStream();
+			StringBuffer sb = new StringBuffer();
+			
+			char c;
+
+			while((c = (char) in.read()) > 0 && c != '\n' && c != '\r' && c != -1) {
+
+				sb.append(c);
+
+			}
+
+			in.close();
+
+			return sb.toString();
+
+		}
+
+		catch(Exception e) {
+
+			System.out.println("An exception happened: " + e.getMessage());
+
+			return null;
+
+		}
+
+	}
+
+}

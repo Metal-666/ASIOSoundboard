@@ -39,6 +39,15 @@ You will find compiled project somewhere in the bin directory.
 
 ## Development
 
+### Repository Structure
+
+Root folder of this repository is a .NET solution. It has a directory called 'ASIOSoundboard' which contains a C# project (soundboard's backend) and a folder called 'flutter-ui' with soundboard's frontend. There are some other folders that are present in the root directory:
+- 'hooks' currenty has a template pre-commit hook that I might use in the future (written in Java because why not) (you will need to install Java 11 to use it) (actually it doesn't even work when using Github Desktop) (apparently hooks are not even supported on Windows?) (well, they are, but also thery aren't) (I hate my life) (ignore this for now).
+- 'ahk' contains some AutoHotkey scripts that are automatically copied to the output directory when the app is built. These scripts can be used after installing the soundboard to do some cool stuff like triggering specific sounds or managing the soundboard on key presses (in other words, I was too lazy to implement in-app hotkeys, so I went with an AutoHotkey integration instead).
+- 'img' contains images used in this repo (for example app screenshots).
+
+### Debugging
+
 You may notice that C# project has several launch profiles. 'main' profile starts debugging normally. 'no-ui' also starts debugging normally, but disables app's UI. When launching this way you can debug the Flutter app separately from the main application (it will still connect to it and work fine, because all the communication is done via WebSockets). To debug the Flutter app, simply open Flutter project in VS Code and hit F5 (I personally selected a Windows build to debug the app, but web version should also work fine). Note that the Host (C# app) must by already running, otherwise the communication will fail. Also, in the current implementation, when you close the Flutter app the Host continues running, and launching the Flutter app again may lead to unexpected results, so make sure to also restart the host when restarting the UI.
 
 ## Guides
