@@ -10,9 +10,14 @@ dependencies:
     sdk: flutter
   flutter_bloc:
   web_socket_channel:
+  flutter_native_splash:
 
 dev_dependencies:
   flutter_lints:
 
 flutter:
   uses-material-design: true
+
+flutter_native_splash:
+  color: "#333333"
+  image: assets/splash/logo_flutter_1080px_clr.png

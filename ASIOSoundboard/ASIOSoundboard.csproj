@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /E /Y &quot;$(ProjectDir)flutter-ui\build\web&quot; &quot;$(TargetDir)flutter-ui\&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)ASIOSoundboard.ahk&quot; &quot;$(TargetDir)ahk-scripts\&quot;" />
+    <Exec Command="xcopy /E /Y &quot;$(ProjectDir)flutter-ui\build\web&quot; &quot;$(TargetDir)flutter-ui\&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)ahk\ASIOSoundboard.ahk&quot; &quot;$(TargetDir)ahk-scripts\&quot;" />
   </Target>
 
 </Project>
