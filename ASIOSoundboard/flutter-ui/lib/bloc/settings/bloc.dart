@@ -14,7 +14,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   late final StreamSubscription<client_events.ClientEvent> _subscription;
 
   SettingsBloc(this._clientRepository)
-      : super(SettingsState(null, <int>[], null, <String>[], 1)) {
+      : super(const SettingsState(null, <int>[], null, <String>[], 1)) {
     // When this bloc is created, retrieve a list of Audio Devices and available Sample Rates to display in the dropdown boxes.
     _clientRepository
       ..listAudioDevices()
@@ -35,14 +35,16 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           {
             debugPrint(
                 'Received Audio Devices: ${event.event.data?.audioDevices}');
-            emit(state.populateASIODevices(event.event.data?.audioDevices));
+            emit(state.copyWith(
+                asioDevices: () => event.event.data?.audioDevices));
             break;
           }
         case client_events.EventTypes.listSampleRates:
           {
             debugPrint(
                 'Received Audio Devices: ${event.event.data?.sampleRates}');
-            emit(state.populateSampleRates(event.event.data?.sampleRates));
+            emit(state.copyWith(
+                sampleRates: () => event.event.data?.sampleRates));
             break;
           }
         case client_events.EventTypes.setAudioDevice:
@@ -50,19 +52,21 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           {
             debugPrint(
                 'Received Audio Device: ${event.event.data?.audioDevice}');
-            emit(state.changeASIODevice(event.event.data?.audioDevice));
+            emit(state.copyWith(
+                asioDevice: () => event.event.data?.audioDevice));
             break;
           }
         case client_events.EventTypes.setSampleRate:
         case client_events.EventTypes.restoreSampleRate:
           {
             debugPrint('Received Sample Rate: ${event.event.data?.sampleRate}');
-            emit(state.changeSampleRate(event.event.data?.sampleRate));
+            emit(
+                state.copyWith(sampleRate: () => event.event.data?.sampleRate));
             break;
           }
         case client_events.EventTypes.restoreGlobalVolume:
           {
-            emit(state.changeGlobalVolume(event.event.data?.volume ?? 1));
+            emit(state.copyWith(volume: () => event.event.data?.volume ?? 1));
             break;
           }
         default:
@@ -79,7 +83,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<VolumeChanged>((event, emit) {
       if (state.volume != event.volume) {
         debugPrint('Changing global volume to ${event.volume}');
-        emit(state.changeGlobalVolume(event.volume));
+        emit(state.copyWith(volume: () => event.volume));
         _clientRepository.setGlobalVolume(event.volume);
       }
     });

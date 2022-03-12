@@ -5,20 +5,21 @@ class RootState {
 
   final double tileSize;
 
-  RootState(this.viewIndex, this.error, this.isAudioEngineRunning,
+  const RootState(this.viewIndex, this.error, this.isAudioEngineRunning,
       {this.tileSize = 1});
 
-  RootState changeError(Error? error) =>
-      RootState(viewIndex, error, isAudioEngineRunning, tileSize: tileSize);
-
-  RootState changeViewIndex(int viewIndex) =>
-      RootState(viewIndex, null, isAudioEngineRunning, tileSize: tileSize);
-
-  RootState changeAudioEngine(bool isAudioEngineRunning) =>
-      RootState(viewIndex, null, isAudioEngineRunning, tileSize: tileSize);
-
-  RootState changeTileSize(double tileSize) =>
-      RootState(viewIndex, null, isAudioEngineRunning, tileSize: tileSize);
+  RootState copyWith(
+          {int Function()? viewIndex,
+          Error? Function()? error,
+          bool Function()? isAudioEngineRunning,
+          double Function()? tileSize}) =>
+      RootState(
+          viewIndex == null ? this.viewIndex : viewIndex.call(),
+          error == null ? this.error : error.call(),
+          isAudioEngineRunning == null
+              ? this.isAudioEngineRunning
+              : isAudioEngineRunning.call(),
+          tileSize: tileSize == null ? this.tileSize : tileSize.call());
 }
 
 class Error {
@@ -27,5 +28,6 @@ class Error {
   final String? resampleFile;
   final int? sampleRate;
 
-  Error(this.error, this.description, {this.resampleFile, this.sampleRate});
+  const Error(this.error, this.description,
+      {this.resampleFile, this.sampleRate});
 }

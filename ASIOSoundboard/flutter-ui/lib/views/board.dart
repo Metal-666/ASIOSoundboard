@@ -17,43 +17,50 @@ class BoardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocConsumer<BoardBloc, BoardState>(
-      listener: (context, state) {
-        if (state.dialog == null) {
-          Navigator.of(context).pop();
-        } else {
-          showDialog(
+        listener: (context, state) {
+          if (state.dialog == null) {
+            Navigator.of(context).pop();
+          } else {
+            showDialog(
               context: context,
               barrierDismissible: false,
               builder: (_) => BlocProvider<BoardBloc>.value(
-                    value: BlocProvider.of<BoardBloc>(context),
-                    child: _newTileDialog(context),
-                  ));
-        }
-      },
-      listenWhen: (BoardState previous, BoardState current) =>
-          (previous.dialog == null) ^ (current.dialog == null),
-      builder: (context, state) => BlocListener<BoardBloc, BoardState>(
-            listener: (context, state) {
-              if (state.encodedAHKHandle != null) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(
-                        'Handle "${state.encodedAHKHandle}" copied to Clipboard'),
-                    action: SnackBarAction(
-                      label: 'OK',
-                      onPressed: () {/*Why is this a required argument?*/},
-                    )));
-              }
-            },
-            child: Row(
-              children: <Widget>[
-                Expanded(child: _mainPanel()),
-                SizedBox(
-                  width: 150,
-                  child: _sidePanel(context),
-                )
-              ],
-            ),
-          ));
+                value: BlocProvider.of<BoardBloc>(context),
+                child: _newTileDialog(context),
+              ),
+            );
+          }
+        },
+        listenWhen: (BoardState previous, BoardState current) =>
+            (previous.dialog == null) ^ (current.dialog == null),
+        builder: (context, state) => BlocListener<BoardBloc, BoardState>(
+          listener: (context, state) {
+            if (state.encodedAHKHandle != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                      'Handle "${state.encodedAHKHandle}" copied to Clipboard'),
+                  action: SnackBarAction(
+                    label: 'OK',
+                    onPressed: () {/*Why is this a required argument?*/},
+                  ),
+                ),
+              );
+            }
+          },
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: _mainPanel(),
+              ),
+              SizedBox(
+                width: 150,
+                child: _sidePanel(context),
+              )
+            ],
+          ),
+        ),
+      );
 
   /// Builds a dialog that lets the user customize the new tile they want to add. Will probably be extracted into a reusable widget later, since I plan on adding an ability to change a tile that is already on the board.
   Widget _newTileDialog(BuildContext context) {
@@ -65,7 +72,10 @@ class BoardView extends StatelessWidget {
     Widget _form() {
       Widget _sectionHeader(String text) => Padding(
             padding: const EdgeInsets.all(3),
-            child: Text(text, style: Theme.of(context).textTheme.subtitle1),
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.subtitle1,
+            ),
           );
 
       return BlocListener<BoardBloc, BoardState>(
@@ -81,59 +91,61 @@ class BoardView extends StatelessWidget {
         },
         child: BlocBuilder<BoardBloc, BoardState>(
           builder: (context, state) => Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _sectionHeader('Tile Name'),
-                  TextFormField(
-                    decoration: const InputDecoration(
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                        isDense: true,
-                        hintText: 'Bruh'),
-                    validator: (value) => state.dialog!.isNameValid
-                        ? null
-                        : 'Name can\'t be empty',
-                    onChanged: (value) => context.read<BoardBloc>().add(
-                          NewTileNameChanged(value),
-                        ),
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _sectionHeader('Tile Name'),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                    isDense: true,
+                    hintText: 'Bruh',
                   ),
-                  _sectionHeader('Tile Sound Path'),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: TextFormField(
-                          decoration: const InputDecoration(
-                              hintText: 'D:\\Sounds\\bruh.wav'),
-                          controller: pathController,
-                          validator: (value) =>
-                              state.dialog!.isPathValid ? null : 'Invalid path',
-                          onChanged: (value) => context.read<BoardBloc>().add(
-                                NewTilePathChanged(value),
-                              ),
+                  validator: (value) =>
+                      state.dialog!.isNameValid ? null : 'Name can\'t be empty',
+                  onChanged: (value) =>
+                      context.read<BoardBloc>().add(NewTileNameChanged(value)),
+                ),
+                _sectionHeader('Tile Sound Path'),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                          hintText: 'D:\\Sounds\\bruh.wav',
                         ),
+                        controller: pathController,
+                        validator: (value) =>
+                            state.dialog!.isPathValid ? null : 'Invalid path',
+                        onChanged: (value) => context
+                            .read<BoardBloc>()
+                            .add(NewTilePathChanged(value)),
                       ),
-                      ElevatedButton(
-                          onPressed: () =>
-                              context.read<BoardBloc>().add(PickTilePath()),
-                          child: const Text('Browse'))
-                    ],
-                  ),
-                  _sectionHeader('Tile Volume'),
-                  Slider(
-                    min: 0,
-                    divisions: 10,
-                    max: 2,
-                    label: (() =>
-                        '${((state.dialog?.tileVolume ?? 1) * 100).toInt()}%')(),
-                    value: state.dialog?.tileVolume ?? 1,
-                    onChanged: (double value) => context
-                        .read<BoardBloc>()
-                        .add(NewTileVolumeChanged(value)),
-                  )
-                ],
-              )),
+                    ),
+                    ElevatedButton(
+                      onPressed: () =>
+                          context.read<BoardBloc>().add(PickTilePath()),
+                      child: const Text('Browse'),
+                    )
+                  ],
+                ),
+                _sectionHeader('Tile Volume'),
+                Slider(
+                  min: 0,
+                  divisions: 10,
+                  max: 2,
+                  label: (() =>
+                      '${((state.dialog?.tileVolume ?? 1) * 100).toInt()}%')(),
+                  value: state.dialog?.tileVolume ?? 1,
+                  onChanged: (double value) => context
+                      .read<BoardBloc>()
+                      .add(NewTileVolumeChanged(value)),
+                )
+              ],
+            ),
+          ),
         ),
       );
     }
@@ -154,21 +166,24 @@ class BoardView extends StatelessWidget {
                 ),
               ),
             ),
-            Expanded(child: _form()),
+            Expanded(
+              child: _form(),
+            ),
             Align(
               alignment: Alignment.centerRight,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   TextButton(
-                      onPressed: () =>
-                          context.read<BoardBloc>().add(NewTileDialogClosed()),
-                      child: const Text('Cancel')),
+                    onPressed: () =>
+                        context.read<BoardBloc>().add(NewTileDialogClosed()),
+                    child: const Text('Cancel'),
+                  ),
                   ElevatedButton(
-                      onPressed: () => context
-                          .read<BoardBloc>()
-                          .add(NewTileDialogSubmitted()),
-                      child: const Text('Add'))
+                    onPressed: () =>
+                        context.read<BoardBloc>().add(NewTileDialogSubmitted()),
+                    child: const Text('Add'),
+                  )
                 ],
               ),
             )
@@ -179,7 +194,10 @@ class BoardView extends StatelessWidget {
   }
 
   Widget _mainPanel() => Stack(
-        children: <Widget>[_grid(), _fab()],
+        children: <Widget>[
+          _grid(),
+          _fab(),
+        ],
       );
 
   Widget _fab() => Align(
@@ -197,24 +215,29 @@ class BoardView extends StatelessWidget {
 
   Widget _grid() => BlocBuilder<RootBloc, RootState>(
         builder: (rootContext, rootState) => BlocBuilder<BoardBloc, BoardState>(
-          builder: (context, state) =>
-              LayoutBuilder(builder: (_, BoxConstraints constraints) {
-            double desiredWidth = 70 * rootState.tileSize;
-            int availableItemSpace = constraints.maxWidth ~/ desiredWidth;
-            double finalWidth = constraints.maxWidth / availableItemSpace;
+          builder: (context, state) => LayoutBuilder(
+            builder: (_, BoxConstraints constraints) {
+              final double desiredWidth = 70 * rootState.tileSize;
+              final int availableItemSpace =
+                  constraints.maxWidth ~/ desiredWidth;
+              final double finalWidth =
+                  constraints.maxWidth / availableItemSpace;
 
-            return GridView.extent(
-              maxCrossAxisExtent: finalWidth,
-              crossAxisSpacing: 3,
-              mainAxisSpacing: 3,
-              children: List.generate(
+              return GridView.extent(
+                maxCrossAxisExtent: finalWidth,
+                crossAxisSpacing: 3,
+                mainAxisSpacing: 3,
+                children: List.generate(
                   state.soundboard?.tiles.length ?? 0,
                   (index) => _tile(
-                      context,
-                      state.soundboard?.tiles[index] ??
-                          Tile('null', 'new_tile', 'null', 1.0))),
-            );
-          }),
+                    context,
+                    state.soundboard?.tiles[index] ??
+                        const Tile('null', 'new_tile', 'null', 1),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       );
 
@@ -222,13 +245,15 @@ class BoardView extends StatelessWidget {
   Widget _tile(BuildContext context, Tile tile) {
     /// A general button to be placed on the back side of the tile.
     Widget _backButton(
-            VoidCallback onPressed, IconData iconData, String data) =>
+            {required String text,
+            required VoidCallback onPressed,
+            required IconData iconData}) =>
         Expanded(
           child: TextButton.icon(
             onPressed: onPressed,
             icon: Icon(iconData),
             label: Text(
-              data,
+              text,
               textWidthBasis: TextWidthBasis.longestLine,
             ),
             style: TextButton.styleFrom(
@@ -239,50 +264,58 @@ class BoardView extends StatelessWidget {
 
     return BlocBuilder<BoardBloc, BoardState>(
       builder: (context, state) => GestureDetector(
-          onSecondaryTap: () =>
-              context.read<BoardBloc>().add(TileRightClick(tile.id)),
-          child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: state.rightClickedTile != tile.id
-                  ? SizedBox.expand(
-                      child: ElevatedButton(
+        onSecondaryTap: () =>
+            context.read<BoardBloc>().add(TileRightClick(tile.id)),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: state.rightClickedTile != tile.id
+              ? SizedBox.expand(
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        context.read<BoardBloc>().add(PlayTileById(tile.id)),
+                    child: Text(tile.name ?? 'new_tile'),
+                  ),
+                )
+              : Card(
+                  margin: EdgeInsets.zero,
+                  color: Theme.of(context).colorScheme.secondary,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      _backButton(
+                        text: 'Delete',
+                        onPressed: () =>
+                            context.read<BoardBloc>().add(DeleteTile(tile.id)),
+                        iconData: Icons.close,
+                      ),
+                      _backDivider(),
+                      _backButton(
+                        text: 'Copy AHK Handle',
                         onPressed: () => context
                             .read<BoardBloc>()
-                            .add(PlayTileById(tile.id)),
-                        child: Text(tile.name ?? 'new_tile'),
+                            .add(EncodeAHKHandle(tile.name)),
+                        iconData: Icons.code,
                       ),
-                    )
-                  : Card(
-                      margin: EdgeInsets.zero,
-                      color: Theme.of(context).colorScheme.secondary,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          _backButton(
-                              () => context
-                                  .read<BoardBloc>()
-                                  .add(DeleteTile(tile.id)),
-                              Icons.close,
-                              'Delete'),
-                          _backDivider(),
-                          _backButton(
-                              () => context
-                                  .read<BoardBloc>()
-                                  .add(EncodeAHKHandle(tile.name)),
-                              Icons.code,
-                              'Copy AHK Handle')
-                        ],
-                      ),
-                    ))),
+                    ],
+                  ),
+                ),
+        ),
+      ),
     );
   }
 
   /// A panel that can be seen on the right of the board. Has buttons that control the state of the soundboard.
   Widget _sidePanel(BuildContext context) {
-    Widget _sideButton(VoidCallback onPressed, String child) => SizedBox(
-        height: 35,
-        child: ElevatedButton(onPressed: onPressed, child: Text(child)));
+    Widget _sideButton(
+            {required String text, required VoidCallback onPressed}) =>
+        SizedBox(
+          height: 35,
+          child: ElevatedButton(
+            onPressed: onPressed,
+            child: Text(text),
+          ),
+        );
 
     Widget _separator() => const SizedBox(
           width: 0,
@@ -291,21 +324,31 @@ class BoardView extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          boxShadow: const <BoxShadow>[
-            BoxShadow(offset: Offset(2, 0), blurRadius: 5)
-          ]),
+        color: Theme.of(context).cardColor,
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            offset: Offset(2, 0),
+            blurRadius: 5,
+          )
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _sideButton(
-              () => context.read<BoardBloc>().add(SaveSoundboard()), 'Save'),
+            text: 'Save',
+            onPressed: () => context.read<BoardBloc>().add(SaveSoundboard()),
+          ),
           _separator(),
           _sideButton(
-              () => context.read<BoardBloc>().add(LoadSoundboard()), 'Load'),
+            text: 'Load',
+            onPressed: () => context.read<BoardBloc>().add(LoadSoundboard()),
+          ),
           const Divider(),
-          _sideButton(() => context.read<BoardBloc>().add(StopAllSound()),
-              'Stop All Sounds')
+          _sideButton(
+            text: 'Stop All Sounds',
+            onPressed: () => context.read<BoardBloc>().add(StopAllSound()),
+          )
         ],
       ),
     );

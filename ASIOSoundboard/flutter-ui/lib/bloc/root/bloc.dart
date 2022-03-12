@@ -12,7 +12,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
   final ClientRepository _clientRepository;
   late final StreamSubscription<client_events.ClientEvent> _subscription;
 
-  RootBloc(this._clientRepository) : super(RootState(0, null, false)) {
+  RootBloc(this._clientRepository) : super(const RootState(0, null, false)) {
     // When the bloc is created (which means that the UI is almost loaded), connect to the host.
     _clientRepository.connect();
 
@@ -26,46 +26,48 @@ class RootBloc extends Bloc<RootEvent, RootState> {
       switch (event.event.type) {
         case client_events.EventTypes.audioEngineError:
           {
-            emit(state.changeError(
-                Error(event.event.data?.error, event.event.data?.description)));
+            emit(state.copyWith(
+                error: () => Error(
+                    event.event.data?.error, event.event.data?.description)));
             break;
           }
         case client_events.EventTypes.startedAudioEngine:
           {
-            emit(state.changeAudioEngine(true));
+            emit(state.copyWith(isAudioEngineRunning: () => true));
             break;
           }
         case client_events.EventTypes.stoppedAudioEngine:
           {
-            emit(state.changeAudioEngine(false));
+            emit(state.copyWith(isAudioEngineRunning: () => false));
             break;
           }
         case client_events.EventTypes.fileResampleNeeded:
           {
-            emit(state.changeError(Error(
-                event.event.data?.error, event.event.data?.description,
-                resampleFile: event.event.data?.file,
-                sampleRate: event.event.data?.sampleRate)));
+            emit(state.copyWith(
+                error: () => Error(
+                    event.event.data?.error, event.event.data?.description,
+                    resampleFile: event.event.data?.file,
+                    sampleRate: event.event.data?.sampleRate)));
             break;
           }
         case client_events.EventTypes.restoreTileSize:
           {
-            emit(state.changeTileSize(event.event.data?.size ?? 1));
+            emit(state.copyWith(tileSize: () => event.event.data?.size ?? 1));
             break;
           }
         default:
       }
     });
-    on<ViewChanged>(
-        (event, emit) => emit(state.changeViewIndex(event.viewIndex)));
+    on<ViewChanged>((event, emit) =>
+        emit(state.copyWith(viewIndex: () => event.viewIndex)));
     on<AudioEngineErrorDismissed>(
-        (event, emit) => emit(state.changeError(null)));
+        (event, emit) => emit(state.copyWith(error: () => null)));
     on<AudioEngineToggled>(
         (event, emit) => _clientRepository.toggleAudioEngine());
     on<FileResampleRequested>((event, emit) =>
         _clientRepository.resampleFile(event.file, event.sampleRate));
     on<TileSizeChanged>(
-        (event, emit) => emit(state.changeTileSize(event.tileSize)));
+        (event, emit) => emit(state.copyWith(tileSize: () => event.tileSize)));
     on<TileSizeChangedFinal>(
         (event, emit) => _clientRepository.saveTileSize(event.tileSize));
   }

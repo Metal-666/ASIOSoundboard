@@ -6,21 +6,19 @@ class SettingsState {
 
   final double volume;
 
-  SettingsState(this.sampleRate, this.sampleRates, this.asioDevice,
+  const SettingsState(this.sampleRate, this.sampleRates, this.asioDevice,
       this.asioDevices, this.volume);
 
-  SettingsState changeSampleRate(int? sampleRate) =>
-      SettingsState(sampleRate, sampleRates, asioDevice, asioDevices, volume);
-
-  SettingsState changeASIODevice(String? asioDevice) =>
-      SettingsState(sampleRate, sampleRates, asioDevice, asioDevices, volume);
-
-  SettingsState changeGlobalVolume(double volume) =>
-      SettingsState(sampleRate, sampleRates, asioDevice, asioDevices, volume);
-
-  SettingsState populateSampleRates(List<int>? sampleRates) =>
-      SettingsState(sampleRate, sampleRates, asioDevice, asioDevices, volume);
-
-  SettingsState populateASIODevices(List<String>? asioDevices) =>
-      SettingsState(sampleRate, sampleRates, asioDevice, asioDevices, volume);
+  SettingsState copyWith(
+          {int? Function()? sampleRate,
+          List<int?>? Function()? sampleRates,
+          String? Function()? asioDevice,
+          List<String>? Function()? asioDevices,
+          double Function()? volume}) =>
+      SettingsState(
+          sampleRate == null ? this.sampleRate : sampleRate.call(),
+          sampleRates == null ? this.sampleRates : sampleRates.call(),
+          asioDevice == null ? this.asioDevice : asioDevice.call(),
+          asioDevices == null ? this.asioDevices : asioDevices.call(),
+          volume == null ? this.volume : volume.call());
 }

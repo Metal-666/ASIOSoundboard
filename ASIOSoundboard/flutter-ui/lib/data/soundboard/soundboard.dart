@@ -4,7 +4,10 @@ import 'dart:convert';
 class Soundboard {
   final List<Tile?> tiles;
 
-  Soundboard(this.tiles);
+  const Soundboard(this.tiles);
+
+  Soundboard copyWith({List<Tile?> Function()? tiles}) =>
+      Soundboard(tiles == null ? this.tiles : tiles.call());
 
   Map<String, dynamic> toMap() => {
         'tiles': tiles.map((x) => x?.toMap()).toList(),
@@ -30,7 +33,18 @@ class Tile {
 
   final double? volume;
 
-  Tile(this.filePath, this.name, this.id, this.volume);
+  const Tile(this.filePath, this.name, this.id, this.volume);
+
+  Tile copyWith(
+          {String? Function()? filePath,
+          String? Function()? name,
+          String? Function()? id,
+          double? Function()? volume}) =>
+      Tile(
+          filePath == null ? this.filePath : filePath.call(),
+          name == null ? this.name : name.call(),
+          id == null ? this.id : id.call(),
+          volume == null ? this.volume : volume.call());
 
   Map<String, dynamic> toMap() =>
       {'file_path': filePath, 'name': name, 'id': id, 'volume': volume};

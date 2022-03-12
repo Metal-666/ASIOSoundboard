@@ -8,19 +8,22 @@ class BoardState {
 
   final String? encodedAHKHandle;
 
-  BoardState(this.soundboard, this.dialog,
+  const BoardState(this.soundboard, this.dialog,
       {this.rightClickedTile, this.encodedAHKHandle});
 
-  BoardState setSoundboard(Soundboard? soundboard) =>
-      BoardState(soundboard, dialog);
-
-  BoardState setDialog(NewTileDialog? dialog) => BoardState(soundboard, dialog);
-
-  BoardState setRightClickedTile(String? rightClickedTile) =>
-      BoardState(soundboard, dialog, rightClickedTile: rightClickedTile);
-
-  BoardState setEncodedAHKHandle(String? encodedAHKHandle) =>
-      BoardState(soundboard, dialog, encodedAHKHandle: encodedAHKHandle);
+  BoardState copyWith(
+          {Soundboard? Function()? soundboard,
+          NewTileDialog? Function()? dialog,
+          String? Function()? rightClickedTile,
+          String? Function()? encodedAHKHandle}) =>
+      BoardState(soundboard == null ? this.soundboard : soundboard.call(),
+          dialog == null ? this.dialog : dialog.call(),
+          rightClickedTile: rightClickedTile == null
+              ? this.rightClickedTile
+              : rightClickedTile.call(),
+          encodedAHKHandle: encodedAHKHandle == null
+              ? this.encodedAHKHandle
+              : encodedAHKHandle.call());
 }
 
 class NewTileDialog {
@@ -33,35 +36,27 @@ class NewTileDialog {
 
   final double tileVolume;
 
-  NewTileDialog(this.tileName, this.tilePath,
+  const NewTileDialog(this.tileName, this.tilePath,
       {this.isNameValid = false,
       this.isPathValid = false,
       this.needToValidate = false,
       this.tileVolume = 1.0});
 
-  NewTileDialog changeName(String? tileName) =>
-      NewTileDialog(tileName, tilePath,
-          isNameValid: isNameValid,
-          isPathValid: isPathValid,
-          tileVolume: tileVolume);
-
-  NewTileDialog changeValidity(
-          bool isNameValid, bool isPathValid, bool needToValidate) =>
-      NewTileDialog(tileName, tilePath,
-          isNameValid: isNameValid,
-          isPathValid: isPathValid,
-          needToValidate: needToValidate,
-          tileVolume: tileVolume);
-
-  NewTileDialog changePath(String? tilePath) =>
-      NewTileDialog(tileName, tilePath,
-          isNameValid: isNameValid,
-          isPathValid: isPathValid,
-          tileVolume: tileVolume);
-
-  NewTileDialog changeVolume(double tileVolume) =>
-      NewTileDialog(tileName, tilePath,
-          isNameValid: isNameValid,
-          isPathValid: isPathValid,
-          tileVolume: tileVolume);
+  NewTileDialog copyWith(
+          {String? Function()? tileName,
+          bool Function()? isNameValid,
+          String? Function()? tilePath,
+          bool Function()? isPathValid,
+          bool Function()? needToValidate,
+          double Function()? tileVolume}) =>
+      NewTileDialog(tileName == null ? this.tileName : tileName.call(),
+          tilePath == null ? this.tilePath : tilePath.call(),
+          isNameValid:
+              isNameValid == null ? this.isNameValid : isNameValid.call(),
+          isPathValid:
+              isPathValid == null ? this.isPathValid : isPathValid.call(),
+          needToValidate: needToValidate == null
+              ? this.needToValidate
+              : needToValidate.call(),
+          tileVolume: tileVolume == null ? this.tileVolume : tileVolume.call());
 }
