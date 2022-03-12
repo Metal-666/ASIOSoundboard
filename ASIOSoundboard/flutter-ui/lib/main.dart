@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'bloc/board/bloc.dart';
 import 'bloc/root/bloc.dart';
 import 'bloc/root/events.dart';
-import 'bloc/root/states.dart';
+import 'bloc/root/state.dart';
 import 'bloc/settings/bloc.dart';
 import 'data/network/client_repository.dart';
 import 'views/board.dart';

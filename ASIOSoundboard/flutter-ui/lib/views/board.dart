@@ -1,13 +1,15 @@
 import '../bloc/root/bloc.dart';
-import '../bloc/root/states.dart';
+import '../bloc/root/state.dart';
 
 import '../bloc/board/events.dart';
 import '../data/soundboard/soundboard.dart';
 
 import '../bloc/board/bloc.dart';
-import '../bloc/board/states.dart';
+import '../bloc/board/state.dart' hide NewTileDialog;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'dialogs/new_tile_dialog.dart';
 
 /// A body panel that displays a soundboard.
 class BoardView extends StatelessWidget {
@@ -18,17 +20,17 @@ class BoardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocConsumer<BoardBloc, BoardState>(
         listener: (context, state) {
-          if (state.dialog == null) {
-            Navigator.of(context).pop();
-          } else {
+          if (state.dialog != null) {
             showDialog(
               context: context,
               barrierDismissible: false,
               builder: (_) => BlocProvider<BoardBloc>.value(
-                value: BlocProvider.of<BoardBloc>(context),
-                child: _newTileDialog(context),
+                value: context.read<BoardBloc>(),
+                child: const NewTileDialog(),
               ),
             );
+          } else {
+            Navigator.of(context).pop();
           }
         },
         listenWhen: (BoardState previous, BoardState current) =>
@@ -61,137 +63,6 @@ class BoardView extends StatelessWidget {
           ),
         ),
       );
-
-  /// Builds a dialog that lets the user customize the new tile they want to add. Will probably be extracted into a reusable widget later, since I plan on adding an ability to change a tile that is already on the board.
-  Widget _newTileDialog(BuildContext context) {
-    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-    final TextEditingController pathController = TextEditingController();
-
-    /// A panel in the middle of the dialog, has most of it's important stuff.
-    Widget _form() {
-      Widget _sectionHeader(String text) => Padding(
-            padding: const EdgeInsets.all(3),
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.subtitle1,
-            ),
-          );
-
-      return BlocListener<BoardBloc, BoardState>(
-        listener: (context, state) {
-          if (state.dialog?.needToValidate == true) {
-            WidgetsBinding.instance?.addPostFrameCallback((_) {
-              _formKey.currentState?.validate();
-            });
-          }
-          if (state.dialog?.tilePath != pathController.text) {
-            pathController.text = state.dialog?.tilePath ?? '';
-          }
-        },
-        child: BlocBuilder<BoardBloc, BoardState>(
-          builder: (context, state) => Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _sectionHeader('Tile Name'),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                    isDense: true,
-                    hintText: 'Bruh',
-                  ),
-                  validator: (value) =>
-                      state.dialog!.isNameValid ? null : 'Name can\'t be empty',
-                  onChanged: (value) =>
-                      context.read<BoardBloc>().add(NewTileNameChanged(value)),
-                ),
-                _sectionHeader('Tile Sound Path'),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: TextFormField(
-                        decoration: const InputDecoration(
-                          hintText: 'D:\\Sounds\\bruh.wav',
-                        ),
-                        controller: pathController,
-                        validator: (value) =>
-                            state.dialog!.isPathValid ? null : 'Invalid path',
-                        onChanged: (value) => context
-                            .read<BoardBloc>()
-                            .add(NewTilePathChanged(value)),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () =>
-                          context.read<BoardBloc>().add(PickTilePath()),
-                      child: const Text('Browse'),
-                    )
-                  ],
-                ),
-                _sectionHeader('Tile Volume'),
-                Slider(
-                  min: 0,
-                  divisions: 10,
-                  max: 2,
-                  label: (() =>
-                      '${((state.dialog?.tileVolume ?? 1) * 100).toInt()}%')(),
-                  value: state.dialog?.tileVolume ?? 1,
-                  onChanged: (double value) => context
-                      .read<BoardBloc>()
-                      .add(NewTileVolumeChanged(value)),
-                )
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 3, top: 5, bottom: 15),
-                child: Text(
-                  'Add New Tile',
-                  style: Theme.of(context).textTheme.headline6,
-                ),
-              ),
-            ),
-            Expanded(
-              child: _form(),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  TextButton(
-                    onPressed: () =>
-                        context.read<BoardBloc>().add(NewTileDialogClosed()),
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () =>
-                        context.read<BoardBloc>().add(NewTileDialogSubmitted()),
-                    child: const Text('Add'),
-                  )
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _mainPanel() => Stack(
         children: <Widget>[

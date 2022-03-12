@@ -28,35 +28,34 @@ class BoardState {
 
 class NewTileDialog {
   final String? tileName;
-  final bool isNameValid;
+  final String? tileNameError;
   final String? tilePath;
-  final bool isPathValid;
+  final String? tilePathError;
 
-  final bool needToValidate;
+  final bool shouldOverwritePath;
 
   final double tileVolume;
 
   const NewTileDialog(this.tileName, this.tilePath,
-      {this.isNameValid = false,
-      this.isPathValid = false,
-      this.needToValidate = false,
+      {this.tileNameError,
+      this.tilePathError,
+      this.shouldOverwritePath = false,
       this.tileVolume = 1.0});
 
   NewTileDialog copyWith(
           {String? Function()? tileName,
-          bool Function()? isNameValid,
+          String? Function()? tileNameError,
           String? Function()? tilePath,
-          bool Function()? isPathValid,
-          bool Function()? needToValidate,
+          String? Function()? tilePathError,
+          bool Function()? shouldOverwritePath,
           double Function()? tileVolume}) =>
       NewTileDialog(tileName == null ? this.tileName : tileName.call(),
           tilePath == null ? this.tilePath : tilePath.call(),
-          isNameValid:
-              isNameValid == null ? this.isNameValid : isNameValid.call(),
-          isPathValid:
-              isPathValid == null ? this.isPathValid : isPathValid.call(),
-          needToValidate: needToValidate == null
-              ? this.needToValidate
-              : needToValidate.call(),
+          tileNameError:
+              tileNameError == null ? this.tileNameError : tileNameError.call(),
+          tilePathError:
+              tilePathError == null ? this.tilePathError : tilePathError.call(),
+          shouldOverwritePath:
+              shouldOverwritePath == null ? false : shouldOverwritePath.call(),
           tileVolume: tileVolume == null ? this.tileVolume : tileVolume.call());
 }

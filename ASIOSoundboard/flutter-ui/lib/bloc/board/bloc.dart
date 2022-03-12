@@ -8,13 +8,13 @@ import 'package:flutter/services.dart';
 
 import '../../data/network/client_repository.dart';
 import 'events.dart';
-import 'states.dart';
+import 'state.dart';
 
 class BoardBloc extends Bloc<BoardEvent, BoardState> {
   final ClientRepository _clientRepository;
   late final StreamSubscription<client_events.ClientEvent> _subscription;
 
-  BoardBloc(this._clientRepository) : super(BoardState(null, null)) {
+  BoardBloc(this._clientRepository) : super(const BoardState(null, null)) {
     // Start listening to the host events. We are mainly insterested in events related to soundboard state, for example creation or deletion of a Tile.
     _subscription = _clientRepository.eventStream.stream
         .listen((client_events.ClientEvent event) => add(ClientEvent(event)));
@@ -29,7 +29,7 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
           }
         case client_events.EventTypes.validateNewTile:
           {
-            bool isNameValid = event.event.data?.name != null,
+            final bool isNameValid = event.event.data?.name != null,
                 isPathValid = event.event.data?.file != null,
                 isIdPresent = event.event.data?.id != null;
             if (isNameValid && isPathValid && isIdPresent) {
@@ -49,17 +49,19 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
             } else {
               emit(state.copyWith(
                   dialog: () => state.dialog?.copyWith(
-                      isNameValid: () => isNameValid,
-                      isPathValid: () => isPathValid,
-                      needToValidate: () => true)));
+                      tileNameError: () =>
+                          isNameValid ? null : 'Tile name is invalid',
+                      tilePathError: () =>
+                          isPathValid ? null : 'Tile path is invalid')));
             }
             break;
           }
         case client_events.EventTypes.pickTilePath:
           {
             emit(state.copyWith(
-                dialog: () => state.dialog
-                    ?.copyWith(tilePath: () => event.event.data?.file)));
+                dialog: () => state.dialog?.copyWith(
+                    tilePath: () => event.event.data?.file,
+                    shouldOverwritePath: () => true)));
             break;
           }
         case client_events.EventTypes.deleteTile:

@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/network/client_repository.dart';
 import 'events.dart';
-import 'states.dart';
+import 'state.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final ClientRepository _clientRepository;

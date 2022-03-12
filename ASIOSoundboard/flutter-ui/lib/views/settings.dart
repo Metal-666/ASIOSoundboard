@@ -1,12 +1,12 @@
 import '../bloc/root/bloc.dart';
 import '../bloc/root/events.dart';
-import '../bloc/root/states.dart';
+import '../bloc/root/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/settings/bloc.dart';
 import '../bloc/settings/events.dart';
-import '../bloc/settings/states.dart';
+import '../bloc/settings/state.dart';
 
 /// A body panel that displays app settings.
 class SettingsView extends StatelessWidget {

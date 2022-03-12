@@ -6,7 +6,7 @@ import 'package:asio_soundboard/data/network/client_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'events.dart';
-import 'states.dart';
+import 'state.dart';
 
 class RootBloc extends Bloc<RootEvent, RootState> {
   final ClientRepository _clientRepository;
