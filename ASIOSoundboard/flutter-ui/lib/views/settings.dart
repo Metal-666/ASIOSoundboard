@@ -50,7 +50,11 @@ class SettingsView extends StatelessWidget {
             children: <Widget>[
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(header),
+                child: Builder(
+                    builder: (context) => Text(
+                          header,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        )),
               ),
               Card(
                 elevation: 3,

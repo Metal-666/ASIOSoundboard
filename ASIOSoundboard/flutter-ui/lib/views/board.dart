@@ -219,7 +219,20 @@ class BoardView extends StatelessWidget {
           _sideButton(
             text: 'Stop All Sounds',
             onPressed: () => context.read<BoardBloc>().add(StopAllSound()),
-          )
+          ),
+          const Expanded(child: SizedBox.shrink()),
+          // Glory to Ukraine :)
+          const Text(
+            'Russian warship',
+            style: TextStyle(color: Colors.blue),
+            textAlign: TextAlign.center,
+          ),
+          const Text(
+            'go fuck yourself',
+            style: TextStyle(color: Colors.yellow),
+            textAlign: TextAlign.center,
+          ),
+          _separator(),
         ],
       ),
     );

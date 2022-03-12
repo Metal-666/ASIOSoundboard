@@ -29,14 +29,16 @@ void main() => runApp(
           create: (context) => _clientRepository,
           child: BlocProvider<RootBloc>.value(
             value: _rootBloc,
-            child: const Root(),
+            child: Root(),
           ),
         ),
       ),
     );
 
 class Root extends StatelessWidget {
-  const Root({Key? key}) : super(key: key);
+  final PageController pageController = PageController();
+
+  Root({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -60,7 +62,11 @@ class Root extends StatelessWidget {
           borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(5), bottomRight: Radius.circular(5)),
           boxShadow: const <BoxShadow>[
-            BoxShadow(offset: Offset(0, 2), blurRadius: 2, spreadRadius: -2)
+            BoxShadow(
+              offset: Offset(0, 2),
+              blurRadius: 2,
+              spreadRadius: -2,
+            )
           ],
         ),
         height: 40,
@@ -81,7 +87,7 @@ class Root extends StatelessWidget {
       );
 
   /// The main panel of the app. Displays a page depending on the current navigation state.
-  Widget _body() => BlocConsumer<RootBloc, RootState>(
+  Widget _body() => BlocListener<RootBloc, RootState>(
         listener: (context, state) {
           if (state.error != null) {
             showModalBottomSheet(
@@ -106,51 +112,57 @@ class Root extends StatelessWidget {
                   ],
                 ),
               ),
-            ).whenComplete(
-              () => context.read<RootBloc>().add(AudioEngineErrorDismissed()),
-            );
+            ).whenComplete(() =>
+                context.read<RootBloc>().add(AudioEngineErrorDismissed()));
           }
+
+          pageController.animateToPage(state.viewIndex,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeOutQuint);
         },
-        builder: (context, state) {
-          switch (state.viewIndex) {
-            case 0:
-              {
-                return BlocProvider<BoardBloc>.value(
-                  value: _boardBloc,
-                  child: BoardView(),
-                );
-              }
-            case 1:
-              {
-                return BlocProvider<SettingsBloc>.value(
-                  value: _settingsBloc,
-                  child: SettingsView(),
-                );
-              }
-            default:
-              {
-                return const Center();
-              }
-          }
-        },
+        child: PageView(
+          controller: pageController,
+          children: <Widget>[
+            BlocProvider<BoardBloc>.value(
+              value: _boardBloc,
+              child: BoardView(),
+            ),
+            BlocProvider<SettingsBloc>.value(
+              value: _settingsBloc,
+              child: SettingsView(),
+            ),
+          ],
+        ),
       );
 
   /// A bar at the bottom of the app window. Has buttons that switch the content of the [_body()] panel.
   Widget _bottomNavigationBar() => BlocBuilder<RootBloc, RootState>(
-        builder: (context, state) => BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(Icons.grid_on),
-              label: 'Board',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Settings',
-            ),
-          ],
-          onTap: (int index) =>
-              context.read<RootBloc>().add(ViewChanged(index)),
-          currentIndex: state.viewIndex,
+        builder: (context, state) => Container(
+          decoration: const BoxDecoration(
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                offset: Offset(0, -1),
+                blurRadius: 10,
+                spreadRadius: -4,
+              )
+            ],
+          ),
+          child: BottomNavigationBar(
+            backgroundColor: Theme.of(context).cardColor,
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(Icons.grid_on),
+                label: 'Board',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings),
+                label: 'Settings',
+              ),
+            ],
+            onTap: (int index) =>
+                context.read<RootBloc>().add(ViewChanged(index)),
+            currentIndex: state.viewIndex,
+          ),
         ),
       );
 }
