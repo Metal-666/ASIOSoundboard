@@ -96,8 +96,14 @@ class Root extends StatelessWidget {
                 padding: const EdgeInsets.all(5),
                 child: Column(
                   children: <Widget>[
-                    Text(state.error!.error.toString()),
-                    Text(state.error!.description.toString()),
+                    Text(
+                      state.error!.error.toString(),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    Text(
+                      state.error!.description.toString(),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     if (state.error!.resampleFile != null &&
                         state.error!.sampleRate != null)
                       ElevatedButton(

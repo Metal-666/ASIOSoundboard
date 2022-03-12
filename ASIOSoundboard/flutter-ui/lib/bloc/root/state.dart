@@ -15,7 +15,7 @@ class RootState {
           double Function()? tileSize}) =>
       RootState(
           viewIndex == null ? this.viewIndex : viewIndex.call(),
-          error == null ? this.error : error.call(),
+          error?.call(),
           isAudioEngineRunning == null
               ? this.isAudioEngineRunning
               : isAudioEngineRunning.call(),
