@@ -61,6 +61,7 @@ namespace ASIOSoundboard.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("48000")]
         public global::System.Nullable<System.Int32> SampleRate {
             get {
                 return ((global::System.Nullable<System.Int32>)(this["SampleRate"]));

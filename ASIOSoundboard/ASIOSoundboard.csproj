@@ -14,7 +14,7 @@
     <PackageReference Include="EmbedIO" Version="3.4.3" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1133-prerelease" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1150.38" />
     <PackageReference Include="NAudio" Version="2.0.1" />
   </ItemGroup>
 

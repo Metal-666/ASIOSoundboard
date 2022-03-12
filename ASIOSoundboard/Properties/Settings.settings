@@ -12,7 +12,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="SampleRate" Type="System.Nullable&lt;System.Int32&gt;" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">48000</Value>
     </Setting>
   </Settings>
 </SettingsFile>

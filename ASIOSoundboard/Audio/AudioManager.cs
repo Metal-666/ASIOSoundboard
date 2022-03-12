@@ -16,7 +16,7 @@ namespace ASIOSoundboard.Audio {
 	/// </summary>
 	public class AudioManager {
 
-		private string? _audioDevice;
+		private string? _audioDevice = Properties.Settings.Default.AudioDevice;
 
 		/// <summary>
 		/// Handle that will be used for retrieving a device object.
@@ -56,7 +56,7 @@ namespace ASIOSoundboard.Audio {
 			
 		}
 
-		private int _sampleRate = 48000;
+		private int _sampleRate = Properties.Settings.Default.SampleRate ?? 48000;
 
 		/// <summary>
 		/// This property will be treated as user's preferred sample rate. Doesn't actually set the Audio Device's sample rate.
@@ -99,7 +99,7 @@ namespace ASIOSoundboard.Audio {
 		/// <summary>
 		/// Combined with each tile's own volume during playback.
 		/// </summary>
-		public float Volume { get; private set; } = 1.0f;
+		public float Volume { get; private set; } = (float) Properties.Settings.Default.GlobalVolume;
 
 		private Soundboard? _soundboard;
 
