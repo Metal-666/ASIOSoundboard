@@ -1,33 +1,61 @@
 class RootState {
   final int viewIndex;
-  final Error? error;
+  final ErrorDialog? errorDialog;
   final bool isAudioEngineRunning;
 
   final double tileSize;
 
-  const RootState(this.viewIndex, this.error, this.isAudioEngineRunning,
+  const RootState(this.viewIndex, this.errorDialog, this.isAudioEngineRunning,
       {this.tileSize = 1});
 
   RootState copyWith(
           {int Function()? viewIndex,
-          Error? Function()? error,
+          ErrorDialog? Function()? errorDialog,
           bool Function()? isAudioEngineRunning,
           double Function()? tileSize}) =>
       RootState(
           viewIndex == null ? this.viewIndex : viewIndex.call(),
-          error?.call(),
+          errorDialog?.call(),
           isAudioEngineRunning == null
               ? this.isAudioEngineRunning
               : isAudioEngineRunning.call(),
           tileSize: tileSize == null ? this.tileSize : tileSize.call());
 }
 
-class Error {
+class ErrorDialog {
   final String? error;
   final String? description;
-  final String? resampleFile;
+
+  ErrorDialog({
+    this.error = 'GENERIC ERROR',
+    this.description = 'Something went wrong',
+  });
+}
+
+class FileErrorDialog extends ErrorDialog {
+  final String? file;
+
+  FileErrorDialog({
+    this.file,
+    String? error = 'GENERIC FILE ERROR',
+    String? description,
+  }) : super(
+          error: error,
+          description: description,
+        );
+}
+
+class ResampleNeededDialog extends FileErrorDialog {
   final int? sampleRate;
 
-  const Error(this.error, this.description,
-      {this.resampleFile, this.sampleRate});
+  ResampleNeededDialog({
+    this.sampleRate,
+    String? file,
+    String? error = 'GENERIC RESAMPLING ERROR',
+    String? description,
+  }) : super(
+          file: file,
+          error: error,
+          description: description,
+        );
 }

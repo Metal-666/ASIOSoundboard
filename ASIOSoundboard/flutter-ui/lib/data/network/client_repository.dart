@@ -1,20 +1,26 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'client_events.dart';
+import 'package:http/http.dart';
+import 'package:uuid/uuid.dart';
+
+import 'http_events.dart';
+import 'websocket_events.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// This class acts as a client for the UI. It is used for connecting, disconnecting, sending and receiving messages from the host.
 class ClientRepository {
   WebSocketChannel? _channel;
+  final Client _client = Client();
 
   // This event bus is subscribed to by the blocs and is used for handling UI updates coming from the server.
-  final StreamController<ClientEvent> eventStream =
-      StreamController<ClientEvent>.broadcast();
+  final StreamController<WebsocketMessage> eventStream =
+      StreamController<WebsocketMessage>.broadcast();
 
-  void connect() {
+  void init() {
     debugPrint('Attempting to connect to the server');
+
     if (_channel == null || _channel?.closeCode != null) {
       _channel = WebSocketChannel.connect(
           Uri.parse('ws://localhost:29873/websockets'));
@@ -23,129 +29,144 @@ class ClientRepository {
         debugPrint('Received a message: $json');
 
         final Map<String, dynamic> message = jsonDecode(json);
-        final EventData messageData = EventData.fromMap(message['data']);
+        final WebsocketMessageData messageData =
+            WebsocketMessageData.fromMap(message['data']);
 
-        final EventTypes type =
-            eventTypeConverter[message['type']] ?? EventTypes.unknown;
+        final WebsocketMessageType type =
+            websocketEventsConverter[message['type']] ??
+                WebsocketMessageType.unknown;
 
-        eventStream.add(ClientEvent(type, messageData));
+        eventStream.add(WebsocketMessage(type, messageData));
       });
     } else {
       debugPrint('Connection failed - client is null or already connected');
     }
   }
 
-  void toggleAudioEngine() {
-    debugPrint('Toggling Audio Engine...');
-    _sendMessage(EventTypes.toggleAudioEngine);
-  }
-
-  void listAudioDevices() {
+  Future<List<String>?> listAudioDevices() {
     debugPrint('Retrieving audio devices...');
-    _sendMessage(EventTypes.listAudioDevices);
+
+    return _makeCoreGetRequest(CoreGetRequest.audioDevices)
+        .then((value) => (value as List<dynamic>).cast<String>());
   }
 
-  void listSampleRates() {
+  Future<List<int>?> listSampleRates() {
     debugPrint('Retrieving sample rates...');
-    _sendMessage(EventTypes.listSampleRates);
+
+    return _makeCoreGetRequest(CoreGetRequest.sampleRates)
+        .then((value) => (value as List<dynamic>).cast<int>());
   }
 
-  void setASIODevice(String? audioDevice) {
-    debugPrint('Settings audio device...');
-    _sendMessage(EventTypes.setAudioDevice,
-        data: EventData.setAudioDevice(audioDevice));
+  Future<String?> pickFilePath() {
+    debugPrint('Picking file...');
+
+    return _makeCoreGetRequest(CoreGetRequest.pickFile)
+        .then((value) => value as String);
   }
 
-  void setSampleRate(int sampleRate) {
-    debugPrint('Settings sample rate...');
-    _sendMessage(EventTypes.setSampleRate,
-        data: EventData.setSampleRate(sampleRate));
+  Future<String?> loadFile(String? filter) {
+    debugPrint('Loading file...');
+
+    return _makeCoreGetRequest(
+      CoreGetRequest.loadFile,
+      <String, String?>{
+        'filter': filter,
+      },
+    ).then((value) => value as String);
   }
 
-  void setGlobalVolume(double volume) {
-    debugPrint('Setting global volume...');
-    _sendMessage(EventTypes.setGlobalVolume,
-        data: EventData.setGlobalVolume(volume));
+  Future<bool?> fileExists(String? path) {
+    debugPrint('Checking if file exists...');
+
+    return _makeCoreGetRequest(
+      CoreGetRequest.fileExists,
+      <String, String?>{
+        'path': path,
+      },
+    ).then((value) => value as bool);
   }
 
-  void playTileById(String? id) {
-    debugPrint('Playing tile by id: $id');
-    _sendMessage(EventTypes.playTileById, data: EventData.tile(id));
+  Future<void> setAudioDevice(String? audioDevice) {
+    debugPrint('Setting Audio Device...');
+
+    return _makeCorePostRequest(
+      CorePostRequest.audioDevice,
+      <String, String?>{'device': audioDevice},
+    );
   }
 
-  void validateNewTile(String? name, String? path, double volume) {
-    debugPrint('Validating new tile (name: $name, path: $path)');
-    _sendMessage(EventTypes.validateNewTile,
-        data: EventData.validateNewTile(path, name, volume));
+  Future<void> setSampleRate(int sampleRate) {
+    debugPrint('Setting Sample Rate...');
+
+    return _makeCorePostRequest(
+      CorePostRequest.audioDevice,
+      <String, int>{'rate': sampleRate},
+    );
   }
 
-  void pickTilePath() {
-    debugPrint('Launching File Picker Dialog');
-    _sendMessage(EventTypes.pickTilePath);
+  Future<void> setGlobalVolume(double glbablVolume) {
+    debugPrint('Setting Global Volume...');
+
+    return _makeCorePostRequest(
+      CorePostRequest.audioDevice,
+      <String, double>{'volume': glbablVolume},
+    );
   }
 
-  void resampleFile(String file, int sampleRate) {
+  Future<void> toggleAudioEngine() {
+    debugPrint('Toggling Audio Engine...');
+
+    return _makeCorePostRequest(CorePostRequest.toggleAudioEngine);
+  }
+
+  Future<void> resampleFile(String? file, int? sampleRate) {
     debugPrint('Requesting file resample ($file)');
-    _sendMessage(EventTypes.fileResampleNeeded,
-        data: EventData.resampleFile(file, sampleRate));
+
+    return _makeCorePostRequest(
+      CorePostRequest.resampleFile,
+      <String, dynamic>{
+        'file': file,
+        'rate': sampleRate,
+      },
+    );
   }
 
-  void stopAllSound() {
-    debugPrint('Stopping all sound...');
-    _sendMessage(EventTypes.stopAllSounds);
+  Future<void> saveFile(String? filter, String? defaultExt, String? content) {
+    debugPrint('Saving a file...');
+
+    return _makeCorePostRequest(
+      CorePostRequest.saveFile,
+      <String, String?>{
+        'filter': filter,
+        'default_ext': defaultExt,
+        'content': content
+      },
+    );
   }
 
-  void deleteTile(String? id) {
-    debugPrint('Deleting tile: $id');
-    _sendMessage(EventTypes.deleteTile, data: EventData.tile(id));
+  Future<void> playFile(String? file, double? volume) {
+    debugPrint('Playing file: $file');
+
+    return _makePublicPostRequest(
+      PublicPostRequest.play,
+      <String, dynamic>{
+        'file': file,
+        'volume': volume,
+      },
+    );
   }
 
-  void saveSoundboard() {
-    debugPrint('Saving soundboard...');
-    _sendMessage(EventTypes.saveSoundboard);
+  Future<void> stopAllSounds() {
+    debugPrint('Stopping all sounds...');
+
+    return _makePublicPostRequest(PublicPostRequest.stop);
   }
 
-  void loadSoundboard() {
-    debugPrint('Loading soundboard...');
-    _sendMessage(EventTypes.loadSoundboard);
-  }
-
-  void saveTileSize(double tileSize) {
-    debugPrint('Saving tile size...');
-    _sendMessage(EventTypes.saveTileSize,
-        data: EventData.setTileSize(tileSize));
-  }
-
-  void restoreTileSize() {
-    debugPrint('Restoring tile size...');
-    _sendMessage(EventTypes.restoreTileSize);
-  }
-
-  void saveGlobalVolume(double volume) {
-    debugPrint('Saving global volume...');
-    _sendMessage(EventTypes.saveGlobalVolume,
-        data: EventData.setGlobalVolume(volume));
-  }
-
-  void restoreGlobalVolume() {
-    debugPrint('Restoring global volume...');
-    _sendMessage(EventTypes.restoreGlobalVolume);
-  }
-
-  void restoreAudioDevice() {
-    debugPrint('Restoring audio device...');
-    _sendMessage(EventTypes.restoreAudioDevice);
-  }
-
-  void restoreSampleRate() {
-    debugPrint('Restoring sample rate...');
-    _sendMessage(EventTypes.restoreSampleRate);
-  }
-
-  void _sendMessage(EventTypes event, {EventData? data}) {
+  void _sendWebsocketMessage(WebsocketMessageType type,
+      {WebsocketMessageData? data}) {
     if (_channel?.closeCode == null) {
-      final String eventType = eventTypeConverter.inverse[event] ??
-          eventTypeConverter.inverse[EventTypes.unknown]!;
+      final String eventType = websocketEventsConverter.inverse[type] ??
+          websocketEventsConverter.inverse[WebsocketMessageType.unknown]!;
       final String? jsonData = data?.toJson();
 
       _channel?.sink.add(jsonEncode({'event': eventType, 'data': jsonData}));
@@ -154,4 +175,45 @@ class ClientRepository {
       debugPrint('Failed to send a message - client is null or not connected');
     }
   }
+
+  Future<dynamic> _makeCoreGetRequest(CoreGetRequest request,
+      [Map<String, dynamic>? queryParameters]) async {
+    Response response = await _client.get(Uri.http(
+        'localhost:29873',
+        '/controller/core/' +
+            (coreGetRequestConverter.inverse[request] ??
+                coreGetRequestConverter.inverse[CoreGetRequest.unknown]!),
+        queryParameters));
+    if (response.statusCode == 200) {
+      String body = response.body;
+
+      debugPrint('Received a response: $body');
+
+      return jsonDecode(body);
+    }
+    debugPrint('Host responded with an error!');
+    return null;
+  }
+
+  Future<void> _makeCorePostRequest(CorePostRequest request,
+          [Map<String, dynamic>? body]) async =>
+      _client.post(
+          Uri.http(
+              'localhost:29873',
+              '/controller/core/' +
+                  (corePostRequestConverter.inverse[request] ??
+                      corePostRequestConverter
+                          .inverse[CorePostRequest.unknown]!)),
+          body: body);
+
+  Future<void> _makePublicPostRequest(PublicPostRequest request,
+          [Map<String, dynamic>? body]) async =>
+      _client.post(
+          Uri.http(
+              'localhost:29873',
+              '/controller/public/' +
+                  (publicPostRequestConverter.inverse[request] ??
+                      publicPostRequestConverter
+                          .inverse[PublicPostRequest.unknown]!)),
+          body: body);
 }

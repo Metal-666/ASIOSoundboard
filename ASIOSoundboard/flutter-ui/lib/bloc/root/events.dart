@@ -1,12 +1,11 @@
-import 'package:asio_soundboard/data/network/client_events.dart'
-    as client_events;
+import '../../data/network/client_events.dart';
 
 abstract class RootEvent {}
 
-class ClientEvent extends RootEvent {
-  final client_events.ClientEvent event;
+class WebsocketEvent extends RootEvent {
+  final WebsocketMessage message;
 
-  ClientEvent(this.event);
+  WebsocketEvent(this.message);
 }
 
 class ViewChanged extends RootEvent {
@@ -17,11 +16,11 @@ class ViewChanged extends RootEvent {
 
 class AudioEngineToggled extends RootEvent {}
 
-class AudioEngineErrorDismissed extends RootEvent {}
+class ErrorDialogDismissed extends RootEvent {}
 
 class FileResampleRequested extends RootEvent {
-  final String file;
-  final int sampleRate;
+  final String? file;
+  final int? sampleRate;
 
   FileResampleRequested(this.file, this.sampleRate);
 }

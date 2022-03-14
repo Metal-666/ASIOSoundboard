@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Windows;
-using static ASIOSoundboard.Audio.Soundboard;
 
 namespace ASIOSoundboard.Audio {
 
@@ -16,127 +15,26 @@ namespace ASIOSoundboard.Audio {
 	/// </summary>
 	public class AudioManager {
 
-		private string? _audioDevice = Properties.Settings.Default.AudioDevice;
-
 		/// <summary>
 		/// Handle that will be used for retrieving a device object.
 		/// </summary>
-		public string? AudioDevice {
-
-			get => _audioDevice;
-
-			set {
-
-				//Can only be set when we are not holding onto a device object
-				if(asioOut == null) {
-
-					_audioDevice = value;
-
-					OnAudioDeviceChanged?.Invoke(this, new AudioDeviceChangedEventArgs() {
-
-						Device = value
-
-					});
-
-				}
-
-				else {
-
-					OnASIOError?.Invoke(this, new ASIOErrorEventArgs() {
-
-						Error = "AUDIO ENGINE IS RUNNING",
-						Description = "You can't change Audio Device while the Engine is Active",
-						AudioDevice = AudioDevice + " => " + value
-
-					});
-
-				}
-
-			}
-			
-		}
-
-		private int _sampleRate = Properties.Settings.Default.SampleRate ?? 48000;
+		public string? AudioDevice { get; set; }
 
 		/// <summary>
 		/// This property will be treated as user's preferred sample rate. Doesn't actually set the Audio Device's sample rate.
 		/// </summary>
-		public int SampleRate {
-
-			get => _sampleRate;
-
-			set {
-
-				//Can only be set when we are not holding onto a device object
-				if(asioOut == null) {
-
-					_sampleRate = value;
-
-					OnSampleRateChanged?.Invoke(this, new SampleRateChangedEventArgs() {
-
-						SampleRate = value
-
-					});
-
-				}
-
-				else {
-
-					OnASIOError?.Invoke(this, new ASIOErrorEventArgs() {
-
-						Error = "AUDIO ENGINE IS RUNNING",
-						Description = "You can't change Sample Rate while the Engine is Active",
-						AudioDevice = SampleRate + " => " + value
-
-					});
-
-				}
-
-			}
-
-		}
+		public int SampleRate { get; set; }
 
 		/// <summary>
 		/// Combined with each tile's own volume during playback.
 		/// </summary>
-		public float Volume { get; private set; } = (float) Properties.Settings.Default.GlobalVolume;
-
-		private Soundboard? _soundboard;
-
-		/// <summary>
-		/// Holds the currently loaded Soundboard object.
-		/// </summary>
-		public Soundboard Soundboard {
-
-			get {
-
-				//If hasn't been set yet, sets itself to a new empty Soundboard.
-				if(_soundboard == null) {
-
-					_soundboard = new Soundboard();
-
-				}
-
-				return _soundboard;
-
-			}
-
-			set {
-
-				_soundboard = value;
-		
-			}
-
-		}
+		public float Volume { get; set; }
 
 		private readonly ILogger<AudioManager> logger;
 
-		public event EventHandler? OnStartedASIO;
-		public event EventHandler? OnStoppedASIO;
-		public event EventHandler<ASIOErrorEventArgs>? OnASIOError;
-		public event EventHandler<AudioDeviceChangedEventArgs>? OnAudioDeviceChanged;
-		public event EventHandler<SampleRateChangedEventArgs>? OnSampleRateChanged;
-		public event EventHandler<FileErrorEventArgs>? OnFileLoadError;
+		public event EventHandler<AudioEngineStatusEventArgs>? OnAudioEngineStatus;
+		public event EventHandler<ErrorEventArgs>? OnError;
+		public event EventHandler<FileErrorEventArgs>? OnFileError;
 		public event EventHandler<FileResampleEventArgs>? OnFileResampleNeeded;
 
 		//This is what I usually refer to as 'Audio Engine' or 'Audio Device'
@@ -177,10 +75,20 @@ namespace ASIOSoundboard.Audio {
 
 			if(asioSampleProvider != null) {
 
-				asioSampleProvider.MixerInputs.ToList()
+				/*asioSampleProvider.MixerInputs.ToList()
 					.FindAll((ISampleProvider provider) => provider is TileSampleProvider)
 					.Cast<TileSampleProvider>().ToList()
-					.ForEach((TileSampleProvider provider) => SetTileVolume(provider));
+					.ForEach((TileSampleProvider provider) => SetTileVolume(provider));*/
+
+				asioSampleProvider.MixerInputs.ToList().ForEach((provider) => {
+
+					if(provider is VolumeSampleProvider volumeSampleprovider) {
+
+						volumeSampleprovider.SetVolume(Volume);
+
+					}
+
+				});
 
 			}
 
@@ -190,7 +98,7 @@ namespace ASIOSoundboard.Audio {
 		/// Sets the volume of an individual tile.
 		/// </summary>
 		/// <param name="provider">TileSampleProvider that holds the reference to desired tile.</param>
-		private void SetTileVolume(TileSampleProvider provider) => provider.Volume = Volume * provider.Tile.Volume;
+		//private void SetTileVolume(TileSampleProvider provider) => provider.Volume = Volume * provider.Tile.Volume;
 
 		/// <summary>
 		/// Gets an array containing available ASIO devices.
@@ -202,26 +110,26 @@ namespace ASIOSoundboard.Audio {
 		/// Plays a sound clip, referenced in a specific Tile.
 		/// </summary>
 		/// <param name="id">The id of the tile, that holds the path to a sound clip.</param>
-		public void PlayTileById(string? id) {
+		/*public void PlayTileById(string? id) {
 
 			Tile tile = Soundboard.Tiles.Where((Tile tile) => tile.Id.Equals(id)).First();
 
 			PlayFile(tile.File, tile);
 
-		}
+		}*/
 
 		/// <summary>
 		/// Plays a sound clip located at a specific path.
 		/// </summary>
 		/// <param name="file">The path to the file.</param>
 		/// <param name="tile">Optional reference to the Tile that was clicked. If provided, makes it possible to change the volume of this sound.</param>
-		public void PlayFile(string? file, Tile? tile = null) {
+		public void PlayFile(string? file, float volume = 1) {
 
 			logger.LogInformation("Preparing to play audio file: {}", file);
 
 			if(asioOut != null) {
 
-				AudioFileReader? source = ValidateFile(file, () => OnFileLoadError?.Invoke(this, new FileErrorEventArgs() {
+				AudioFileReader? source = ValidateFile(file, () => OnFileError?.Invoke(this, new FileErrorEventArgs() {
 
 					Error = "FILE NOT FOUND",
 					Description = "Make sure the requested file is present on your device",
@@ -240,21 +148,7 @@ namespace ASIOSoundboard.Audio {
 
 					logger.LogInformation("Playing audio file: {}", file);
 
-					if(tile != null) {
-
-						TileSampleProvider provider = new (source, tile);
-
-						SetTileVolume(provider);
-
-						asioSampleProvider!.AddMixerInput(provider);
-
-					}
-
-					else {
-
-						asioSampleProvider!.AddMixerInput((ISampleProvider) source);
-
-					}
+					asioSampleProvider!.AddMixerInput(new VolumeSampleProvider(source, volume));
 
 				}
 
@@ -262,11 +156,10 @@ namespace ASIOSoundboard.Audio {
 
 			else {
 
-				OnASIOError?.Invoke(this, new ASIOErrorEventArgs() {
+				OnError?.Invoke(this, new ErrorEventArgs() {
 
 					Error = "ENGINE IS STOPPED",
-					Description = "You need to start the Audio Engine before playing audio files",
-					AudioDevice = AudioDevice
+					Description = "You need to start the Audio Engine before playing audio files"
 
 				});
 
@@ -300,7 +193,7 @@ namespace ASIOSoundboard.Audio {
 
 			else {
 
-				OnFileLoadError?.Invoke(this, new FileErrorEventArgs() {
+				OnFileError?.Invoke(this, new FileErrorEventArgs() {
 
 					Error = "FILE NOT FOUND",
 					Description = "Make sure the requested file is present on your device",
@@ -352,17 +245,16 @@ namespace ASIOSoundboard.Audio {
 
 						logger.LogInformation("Audio Engine started");
 
-						OnStartedASIO?.Invoke(this, new EventArgs());
+						OnAudioEngineStatus?.Invoke(this, new AudioEngineStatusEventArgs() { Active = true });
 
 					}
 
 					else {
 
-						OnASIOError?.Invoke(this, new ASIOErrorEventArgs() {
+						OnError?.Invoke(this, new ErrorEventArgs() {
 
 							Error = "SAMPLE RATE NOT SUPPORTED",
-							Description = "The Audio Device you selected doesn't support current sample rate",
-							AudioDevice = AudioDevice
+							Description = "The Audio Device you selected doesn't support current sample rate"
 
 						});
 
@@ -376,11 +268,10 @@ namespace ASIOSoundboard.Audio {
 
 			else {
 
-				OnASIOError?.Invoke(this, new ASIOErrorEventArgs() {
+				OnError?.Invoke(this, new ErrorEventArgs() {
 
 					Error = "DEVICE NOT FOUND",
-					Description = "The Audio Device you intend to use for the Audio Engine was not found on your PC",
-					AudioDevice = AudioDevice
+					Description = "The Audio Device you intend to use for the Audio Engine was not found on your PC"
 
 				});
 
@@ -401,7 +292,7 @@ namespace ASIOSoundboard.Audio {
 
 				logger.LogInformation("Audio Engine stopped");
 
-				OnStoppedASIO?.Invoke(this, new EventArgs());
+				OnAudioEngineStatus?.Invoke(this, new AudioEngineStatusEventArgs() { Active = false });
 
 			}
 
@@ -450,17 +341,10 @@ namespace ASIOSoundboard.Audio {
 
 		}
 
-		public class AudioDeviceChangedEventArgs {
+		public class AudioEngineStatusEventArgs : EventArgs {
 
-			[JsonPropertyName("audio_device")]
-			public string? Device { get; set; }
-
-		}
-
-		public class SampleRateChangedEventArgs {
-
-			[JsonPropertyName("sample_rate")]
-			public int SampleRate { get; set; }
+			[JsonPropertyName("active")]
+			public bool Active { get; set; }
 
 		}
 
@@ -470,13 +354,6 @@ namespace ASIOSoundboard.Audio {
 			public string Error { get; set; } = "GENERIC ERROR";
 			[JsonPropertyName("description")]
 			public string? Description { get; set; }
-
-		}
-
-		public class ASIOErrorEventArgs : ErrorEventArgs {
-
-			[JsonPropertyName("audio_device")]
-			public string? AudioDevice { get; set; }
 
 		}
 

@@ -1,15 +1,19 @@
 ﻿using ASIOSoundboard.Audio;
-using ASIOSoundboard.Controllers;
+using ASIOSoundboard.Web.Controllers;
+using ASIOSoundboard.Web.Modules;
 using EmbedIO;
 using EmbedIO.WebApi;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace ASIOSoundboard {
 
 	public partial class App : Application {
+
+		private ILogger logger;
 
 		private WebServer? webServer;
 		private AudioManager? audioManager;
@@ -17,6 +21,8 @@ namespace ASIOSoundboard {
 		private void OnStartup(object sender, StartupEventArgs e) {
 
 			ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddDebug());
+
+			logger = loggerFactory.CreateLogger<App>();
 
 			audioManager = new AudioManager(loggerFactory.CreateLogger<AudioManager>());
 
@@ -45,8 +51,9 @@ namespace ASIOSoundboard {
 				webServer = new WebServer((WebServerOptions options) => options
 						.WithUrlPrefix("http://localhost:29873/")
 						.WithMode(HttpListenerMode.EmbedIO))
-					.WithModule(new WebSocketController("/websockets", audioManager, loggerFactory.CreateLogger<WebSocketController>()))
-					.WithWebApi("/controller", (WebApiModule module) => module.WithController(() => new SoundboardController(audioManager, loggerFactory.CreateLogger<SoundboardController>())))
+					.WithModule(new HostEventsModule("/websockets", audioManager, loggerFactory.CreateLogger<HostEventsModule>()))
+					.WithWebApi("/controller/public", (WebApiModule module) => module.WithController(() => new PublicController(audioManager, loggerFactory.CreateLogger<PublicController>())))
+					.WithWebApi("/controller/core", (WebApiModule module) => module.WithController(() => new CoreController(audioManager, loggerFactory.CreateLogger<CoreController>())))
 					.WithStaticFolder("/", @"flutter-ui\", true);
 
 				webServer.Start();

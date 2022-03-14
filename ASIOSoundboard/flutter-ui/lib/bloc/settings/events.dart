@@ -1,12 +1,13 @@
-import 'package:asio_soundboard/data/network/client_events.dart'
-    as client_events;
+import '../../data/network/client_events.dart';
 
 abstract class SettingsEvent {}
 
-class ClientEvent extends SettingsEvent {
-  final client_events.ClientEvent event;
+class PageLoaded extends SettingsEvent {}
 
-  ClientEvent(this.event);
+class WebsocketEvent extends SettingsEvent {
+  final WebsocketMessage message;
+
+  WebsocketEvent(this.message);
 }
 
 class SampleRateChanged extends SettingsEvent {

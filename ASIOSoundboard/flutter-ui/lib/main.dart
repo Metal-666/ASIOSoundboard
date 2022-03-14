@@ -6,34 +6,53 @@ import 'bloc/root/bloc.dart';
 import 'bloc/root/events.dart';
 import 'bloc/root/state.dart';
 import 'bloc/settings/bloc.dart';
+import 'bloc/settings/events.dart';
 import 'data/network/client_repository.dart';
+import 'data/settings/settings_repository.dart';
 import 'views/board.dart';
 import 'views/settings.dart';
 
-// All this fields should probably not be here, but I hava no idea what is the better place for them.
+// All this fields should probably not be here, but I have no idea where else to put them.
 final ClientRepository _clientRepository = ClientRepository();
+final SettingsRepository _settingsRepository = SettingsRepository();
 
-final RootBloc _rootBloc = RootBloc(_clientRepository);
+final RootBloc _rootBloc = RootBloc(_clientRepository, _settingsRepository);
 final BoardBloc _boardBloc = BoardBloc(_clientRepository);
-final SettingsBloc _settingsBloc = SettingsBloc(_clientRepository);
+final SettingsBloc _settingsBloc =
+    SettingsBloc(_clientRepository, _settingsRepository);
 // To create our theme we first initalize a simple dark theme and then modify it's values in the MaterialApp constructor.
 final ThemeData _theme = ThemeData.dark();
 
-void main() => runApp(
-      MaterialApp(
-        title: 'ASIOSoundboard',
-        theme: _theme.copyWith(
-            colorScheme: _theme.colorScheme.copyWith(
-                primary: Colors.deepPurple[500], secondary: Colors.white)),
-        home: RepositoryProvider(
-          create: (context) => _clientRepository,
-          child: BlocProvider<RootBloc>.value(
-            value: _rootBloc,
-            child: Root(),
-          ),
+void main() async {
+  await _settingsRepository.init();
+  _clientRepository.init();
+
+  runApp(
+    MaterialApp(
+      title: 'ASIOSoundboard',
+      theme: _theme.copyWith(
+        colorScheme: _theme.colorScheme.copyWith(
+          primary: Colors.deepPurple[500],
+          secondary: Colors.white,
         ),
       ),
-    );
+      home: MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider(
+            create: (_) => _clientRepository,
+          ),
+          RepositoryProvider(
+            create: (_) => _settingsRepository,
+          ),
+        ],
+        child: BlocProvider<RootBloc>.value(
+          value: _rootBloc,
+          child: Root(),
+        ),
+      ),
+    ),
+  );
+}
 
 class Root extends StatelessWidget {
   final PageController pageController = PageController();
@@ -89,37 +108,41 @@ class Root extends StatelessWidget {
   /// The main panel of the app. Displays a page depending on the current navigation state.
   Widget _body() => BlocListener<RootBloc, RootState>(
         listener: (context, state) {
-          if (state.error != null) {
+          if (state.errorDialog != null) {
             showModalBottomSheet(
               context: context,
               builder: (_) => Padding(
                 padding: const EdgeInsets.all(5),
                 child: Column(
-                  children: <Widget>[
+                  children: <Widget?>[
                     Text(
-                      state.error!.error.toString(),
+                      state.errorDialog!.error.toString(),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     Text(
-                      state.error!.description.toString(),
+                      state.errorDialog!.description.toString(),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    if (state.error!.resampleFile != null &&
-                        state.error!.sampleRate != null)
-                      ElevatedButton(
-                        onPressed: () {
-                          context.read<RootBloc>().add(FileResampleRequested(
-                              state.error!.resampleFile!,
-                              state.error!.sampleRate!));
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Resample'),
-                      )
-                  ],
+                    () {
+                      if (state.errorDialog is ResampleNeededDialog) {
+                        ResampleNeededDialog dialog =
+                            state.errorDialog as ResampleNeededDialog;
+
+                        return ElevatedButton(
+                          onPressed: () {
+                            context.read<RootBloc>().add(FileResampleRequested(
+                                dialog.file, dialog.sampleRate));
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Resample'),
+                        );
+                      }
+                    }()
+                  ].where((element) => element != null).toList().cast<Widget>(),
                 ),
               ),
-            ).whenComplete(() =>
-                context.read<RootBloc>().add(AudioEngineErrorDismissed()));
+            ).whenComplete(
+                () => context.read<RootBloc>().add(ErrorDialogDismissed()));
           }
 
           pageController.animateToPage(state.viewIndex,
@@ -134,7 +157,7 @@ class Root extends StatelessWidget {
               child: BoardView(),
             ),
             BlocProvider<SettingsBloc>.value(
-              value: _settingsBloc,
+              value: _settingsBloc..add(PageLoaded()),
               child: SettingsView(),
             ),
           ],

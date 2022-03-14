@@ -3,21 +3,20 @@ using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
 using Microsoft.Extensions.Logging;
-using System.Linq;
-using static ASIOSoundboard.Audio.Soundboard;
+using System.Collections.Specialized;
 
-namespace ASIOSoundboard.Controllers {
+namespace ASIOSoundboard.Web.Controllers {
 
 	/// <summary>
 	/// A <c>WebApiController</c> that can interact with <c>AudioManager</c>.
 	/// </summary>
-	public class SoundboardController : WebApiController {
+	public class PublicController : WebApiController {
 
 		private readonly ILogger logger;
 
 		private readonly AudioManager audioManager;
 
-		public SoundboardController(AudioManager audioManager, ILogger logger) {
+		public PublicController(AudioManager audioManager, ILogger logger) {
 
 			this.audioManager = audioManager;
 			this.logger = logger;
@@ -28,20 +27,22 @@ namespace ASIOSoundboard.Controllers {
 		/// Plays a sound from a Tile (or all tiles, if multiple where found) with the provided name.
 		/// </summary>
 		/// <param name="selector">The name of the Tile.</param>
-		[Route(HttpVerbs.Get, "/play/byName/{selector}")]
-		public void PlayByName(string selector) {
+		[Route(HttpVerbs.Post, "/play")]
+		public async void Play() {
 
-			logger.LogInformation("Playing tile by name ({})", selector);
+			NameValueCollection query = await HttpContext.GetRequestFormDataAsync();
 
-			audioManager.Soundboard.Tiles.Where((Tile tile) => tile.Name?.Equals(selector) ?? false).ToList().ForEach((Tile tile) => audioManager.PlayFile(tile.File));
-		
+			logger.LogInformation("Playing file ({})", query.Get("file"));
+
+			audioManager.PlayFile(query.Get("file"), float.Parse(query.Get("volume") ?? "1"));
+
 		}
 
 		/// <summary>
 		/// Stops all sounds.
 		/// </summary>
-		[Route(HttpVerbs.Get, "/stopAll")]
-		public void StopAll() {
+		[Route(HttpVerbs.Post, "/stop")]
+		public void Stop() {
 
 			logger.LogInformation("Stopping all sounds");
 

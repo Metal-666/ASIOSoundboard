@@ -1,5 +1,4 @@
-import 'package:asio_soundboard/data/network/client_events.dart'
-    as client_events;
+import '../../data/network/client_events.dart';
 
 abstract class BoardEvent {}
 
@@ -9,10 +8,10 @@ abstract class IdEvent extends BoardEvent {
   IdEvent(this.id);
 }
 
-class ClientEvent extends BoardEvent {
-  final client_events.ClientEvent event;
+class WebsocketEvent extends BoardEvent {
+  final WebsocketMessage message;
 
-  ClientEvent(this.event);
+  WebsocketEvent(this.message);
 }
 
 class PlayTileById extends IdEvent {

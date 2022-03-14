@@ -1,58 +1,62 @@
 import 'dart:async';
 
-import 'package:asio_soundboard/data/network/client_events.dart'
-    as client_events;
-import 'package:asio_soundboard/data/network/client_repository.dart';
+import '../../data/settings/settings_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/network/websocket_events.dart';
+import '../../data/network/client_repository.dart';
 import 'events.dart';
 import 'state.dart';
 
 class RootBloc extends Bloc<RootEvent, RootState> {
   final ClientRepository _clientRepository;
-  late final StreamSubscription<client_events.ClientEvent> _subscription;
+  final SettingsRepository _settingsRepository;
 
-  RootBloc(this._clientRepository) : super(const RootState(0, null, false)) {
-    // When the bloc is created (which means that the UI is almost loaded), connect to the host.
-    _clientRepository.connect();
+  late final StreamSubscription<WebsocketMessage> _subscription;
 
-    _clientRepository.restoreTileSize();
+  RootBloc(this._clientRepository, this._settingsRepository)
+      : super(
+            RootState(0, null, false, tileSize: _settingsRepository.tileSize)) {
+    //_clientRepository.restoreTileSize();
 
     // Start listening to the host events. We are mainly interested in global changes like stopping and starting the Audio Engine, and also errors and other notifications.
     _subscription = _clientRepository.eventStream.stream
-        .listen((client_events.ClientEvent event) => add(ClientEvent(event)));
+        .listen((WebsocketMessage message) => add(WebsocketEvent(message)));
 
-    on<ClientEvent>((event, emit) {
-      switch (event.event.type) {
-        case client_events.EventTypes.audioEngineError:
+    on<WebsocketEvent>((event, emit) {
+      switch (event.message.type) {
+        case WebsocketMessageType.audioEngineStatus:
           {
-            emit(state.copyWith(
-                error: () => Error(
-                    event.event.data?.error, event.event.data?.description)));
+            bool? active = event.message.data?.active;
+
+            if (active != null) {
+              emit(state.copyWith(isAudioEngineRunning: () => active));
+            }
             break;
           }
-        case client_events.EventTypes.startedAudioEngine:
+        case WebsocketMessageType.error:
           {
-            emit(state.copyWith(isAudioEngineRunning: () => true));
+            Error? error = event.message.data?.error;
+
+            if (error != null) {
+              emit(state.copyWith(
+                  errorDialog: () => ErrorDialog(
+                      error: error.error, description: error.description)));
+            }
             break;
           }
-        case client_events.EventTypes.stoppedAudioEngine:
+        case WebsocketMessageType.fileResampleNeeded:
           {
-            emit(state.copyWith(isAudioEngineRunning: () => false));
-            break;
-          }
-        case client_events.EventTypes.fileResampleNeeded:
-          {
-            emit(state.copyWith(
-                error: () => Error(
-                    event.event.data?.error, event.event.data?.description,
-                    resampleFile: event.event.data?.file,
-                    sampleRate: event.event.data?.sampleRate)));
-            break;
-          }
-        case client_events.EventTypes.restoreTileSize:
-          {
-            emit(state.copyWith(tileSize: () => event.event.data?.size ?? 1));
+            Error? error = event.message.data?.error;
+
+            if (error != null) {
+              emit(state.copyWith(
+                  errorDialog: () => ResampleNeededDialog(
+                      error: error.error,
+                      description: error.description,
+                      file: error.file,
+                      sampleRate: error.sampleRate)));
+            }
             break;
           }
         default:
@@ -60,8 +64,8 @@ class RootBloc extends Bloc<RootEvent, RootState> {
     });
     on<ViewChanged>((event, emit) =>
         emit(state.copyWith(viewIndex: () => event.viewIndex)));
-    on<AudioEngineErrorDismissed>(
-        (event, emit) => emit(state.copyWith(error: () => null)));
+    on<ErrorDialogDismissed>(
+        (event, emit) => emit(state.copyWith(errorDialog: () => null)));
     on<AudioEngineToggled>(
         (event, emit) => _clientRepository.toggleAudioEngine());
     on<FileResampleRequested>((event, emit) =>
@@ -69,7 +73,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
     on<TileSizeChanged>(
         (event, emit) => emit(state.copyWith(tileSize: () => event.tileSize)));
     on<TileSizeChangedFinal>(
-        (event, emit) => _clientRepository.saveTileSize(event.tileSize));
+        (event, emit) => _settingsRepository.tileSize = event.tileSize);
   }
 
   @override
