@@ -6,7 +6,6 @@ using EmbedIO.WebApi;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace ASIOSoundboard {
@@ -17,6 +16,8 @@ namespace ASIOSoundboard {
 
 		private WebServer? webServer;
 		private AudioManager? audioManager;
+
+		private MainWindow? window;
 
 		private void OnStartup(object sender, StartupEventArgs e) {
 
@@ -34,7 +35,8 @@ namespace ASIOSoundboard {
 			//In prod --no-ui shouldn't be used
 			if(!e.Args.Contains("--no-ui")) {
 
-				new MainWindow(e.Args.Contains("--no-flutter")).Show();
+				window = new MainWindow(e.Args.Contains("--no-flutter"));
+				window.Show();
 
 			}
 
@@ -48,12 +50,17 @@ namespace ASIOSoundboard {
 
 			if(audioManager != null) {
 
+				HostEventsModule hostEventsModule = new("/websockets", audioManager, loggerFactory.CreateLogger<HostEventsModule>());
+				CoreController coreController = new(audioManager, loggerFactory.CreateLogger<CoreController>());
+
+				coreController.OnAppReloadRequest += (sender, e) => window?.ReloadApp();
+
 				webServer = new WebServer((WebServerOptions options) => options
 						.WithUrlPrefix("http://localhost:29873/")
 						.WithMode(HttpListenerMode.EmbedIO))
-					.WithModule(new HostEventsModule("/websockets", audioManager, loggerFactory.CreateLogger<HostEventsModule>()))
-					.WithWebApi("/controller/public", (WebApiModule module) => module.WithController(() => new PublicController(audioManager, loggerFactory.CreateLogger<PublicController>())))
-					.WithWebApi("/controller/core", (WebApiModule module) => module.WithController(() => new CoreController(audioManager, loggerFactory.CreateLogger<CoreController>())))
+					.WithModule(hostEventsModule)
+					.WithWebApi("/controller/public", (WebApiModule module) => module.WithController(() => new PublicController(audioManager, hostEventsModule, loggerFactory.CreateLogger<PublicController>())))
+					.WithWebApi("/controller/core", (WebApiModule module) => module.WithController(() => coreController))
 					.WithStaticFolder("/", @"flutter-ui\", true);
 
 				webServer.Start();
@@ -65,6 +72,7 @@ namespace ASIOSoundboard {
 		private void OnExit(object sender, ExitEventArgs e) {
 
 			webServer?.Dispose();
+			audioManager?.Dispose();
 
 		}
 

@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:http/http.dart';
-import 'package:uuid/uuid.dart';
 
 import 'http_events.dart';
 import 'websocket_events.dart';
-import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// This class acts as a client for the UI. It is used for connecting, disconnecting, sending and receiving messages from the host.
@@ -19,124 +18,131 @@ class ClientRepository {
       StreamController<WebsocketMessage>.broadcast();
 
   void init() {
-    debugPrint('Attempting to connect to the server');
+    log('Attempting to connect to the server');
 
     if (_channel == null || _channel?.closeCode != null) {
-      _channel = WebSocketChannel.connect(
-          Uri.parse('ws://localhost:29873/websockets'));
-      // When we are connected to the host, any message received will be deserialized from JSON and an event with the message type and data will be sent to the event bus.
-      _channel?.stream.listen((json) {
-        debugPrint('Received a message: $json');
+      try {
+        _channel = WebSocketChannel.connect(
+            Uri.parse('ws://localhost:29873/websockets'));
+        // When we are connected to the host, any message received will be deserialized from JSON and an event with the message type and data will be sent to the event bus.
+        _channel?.stream.listen(
+          (json) {
+            log('Received a message: $json');
 
-        final Map<String, dynamic> message = jsonDecode(json);
-        final WebsocketMessageData messageData =
-            WebsocketMessageData.fromMap(message['data']);
+            final Map<String, dynamic> message = jsonDecode(json);
+            final WebsocketMessageData messageData =
+                WebsocketMessageData.fromMap(message['data']);
 
-        final WebsocketMessageType type =
-            websocketEventsConverter[message['type']] ??
-                WebsocketMessageType.unknown;
+            final WebsocketMessageType type =
+                websocketEventsConverter[message['type']] ??
+                    WebsocketMessageType.unknown;
 
-        eventStream.add(WebsocketMessage(type, messageData));
-      });
+            eventStream.add(WebsocketMessage(type, messageData));
+          },
+          onError: (error) => log('WebSocket channel emitted an error: $error'),
+        );
+      } catch (e) {
+        log('WebSocket connection failed - $e');
+      }
     } else {
-      debugPrint('Connection failed - client is null or already connected');
+      log('WebSocket connection failed - client is null or already connected');
     }
   }
 
   Future<List<String>?> listAudioDevices() {
-    debugPrint('Retrieving audio devices...');
+    log('Retrieving audio devices...');
 
     return _makeCoreGetRequest(CoreGetRequest.audioDevices)
-        .then((value) => (value as List<dynamic>).cast<String>());
+        .then((value) => (value?['devices'] as List<dynamic>?)?.cast<String>());
   }
 
   Future<List<int>?> listSampleRates() {
-    debugPrint('Retrieving sample rates...');
+    log('Retrieving sample rates...');
 
     return _makeCoreGetRequest(CoreGetRequest.sampleRates)
-        .then((value) => (value as List<dynamic>).cast<int>());
+        .then((value) => (value?['rates'] as List<dynamic>?)?.cast<int>());
   }
 
   Future<String?> pickFilePath() {
-    debugPrint('Picking file...');
+    log('Picking file...');
 
     return _makeCoreGetRequest(CoreGetRequest.pickFile)
-        .then((value) => value as String);
+        .then((value) => value['file'] as String);
   }
 
   Future<String?> loadFile(String? filter) {
-    debugPrint('Loading file...');
+    log('Loading file...');
 
     return _makeCoreGetRequest(
       CoreGetRequest.loadFile,
       <String, String?>{
         'filter': filter,
       },
-    ).then((value) => value as String);
+    ).then((value) => value['content'] as String?);
   }
 
   Future<bool?> fileExists(String? path) {
-    debugPrint('Checking if file exists...');
+    log('Checking if file exists...');
 
     return _makeCoreGetRequest(
       CoreGetRequest.fileExists,
       <String, String?>{
         'path': path,
       },
-    ).then((value) => value as bool);
-  }
-
-  Future<void> setAudioDevice(String? audioDevice) {
-    debugPrint('Setting Audio Device...');
-
-    return _makeCorePostRequest(
-      CorePostRequest.audioDevice,
-      <String, String?>{'device': audioDevice},
-    );
-  }
-
-  Future<void> setSampleRate(int sampleRate) {
-    debugPrint('Setting Sample Rate...');
-
-    return _makeCorePostRequest(
-      CorePostRequest.audioDevice,
-      <String, int>{'rate': sampleRate},
-    );
+    ).then((value) => value['exists'] as bool);
   }
 
   Future<void> setGlobalVolume(double glbablVolume) {
-    debugPrint('Setting Global Volume...');
+    log('Setting Global Volume...');
 
     return _makeCorePostRequest(
-      CorePostRequest.audioDevice,
-      <String, double>{'volume': glbablVolume},
+      CorePostRequest.globalVolume,
+      <String, String>{'volume': glbablVolume.toString()},
     );
   }
 
-  Future<void> toggleAudioEngine() {
-    debugPrint('Toggling Audio Engine...');
+  Future<void> startAudioEngine(
+      String? audioDevice, int? sampleRate, double? globalVolume) {
+    log('Starting Audio Engine with AudioDevice=$audioDevice, SampleRate=$sampleRate and GlobalVolume=$globalVolume');
 
-    return _makeCorePostRequest(CorePostRequest.toggleAudioEngine);
+    return _makeCorePostRequest(
+        CorePostRequest.startAudioEngine, <String, String>{
+      'device': audioDevice.toString(),
+      'rate': sampleRate.toString(),
+      'volume': globalVolume.toString()
+    });
   }
 
-  Future<void> resampleFile(String? file, int? sampleRate) {
-    debugPrint('Requesting file resample ($file)');
+  Future<void> stopAudioEngine() {
+    log('Stopping Audio Engine...');
+
+    return _makeCorePostRequest(CorePostRequest.stopAudioEngine);
+  }
+
+  Future<void> resampleFile(String file, int sampleRate) {
+    log('Requesting file resample ($file)');
 
     return _makeCorePostRequest(
       CorePostRequest.resampleFile,
-      <String, dynamic>{
+      <String, String>{
         'file': file,
-        'rate': sampleRate,
+        'rate': sampleRate.toString(),
       },
     );
   }
 
-  Future<void> saveFile(String? filter, String? defaultExt, String? content) {
-    debugPrint('Saving a file...');
+  Future<void> reloadApp() {
+    log('Reloading app...');
+
+    return _makeCorePostRequest(CorePostRequest.reload);
+  }
+
+  Future<void> saveFile(String filter, String defaultExt, String content) {
+    log('Saving a file...');
 
     return _makeCorePostRequest(
       CorePostRequest.saveFile,
-      <String, String?>{
+      <String, String>{
         'filter': filter,
         'default_ext': defaultExt,
         'content': content
@@ -144,20 +150,20 @@ class ClientRepository {
     );
   }
 
-  Future<void> playFile(String? file, double? volume) {
-    debugPrint('Playing file: $file');
+  Future<void> playFile(String file, double? volume) {
+    log('Playing file: $file');
 
     return _makePublicPostRequest(
       PublicPostRequest.play,
-      <String, dynamic>{
+      <String, String>{
         'file': file,
-        'volume': volume,
+        'volume': (volume ?? 1).toString(),
       },
     );
   }
 
   Future<void> stopAllSounds() {
-    debugPrint('Stopping all sounds...');
+    log('Stopping all sounds...');
 
     return _makePublicPostRequest(PublicPostRequest.stop);
   }
@@ -170,33 +176,34 @@ class ClientRepository {
       final String? jsonData = data?.toJson();
 
       _channel?.sink.add(jsonEncode({'event': eventType, 'data': jsonData}));
-      debugPrint('Sent a message: "$eventType", data: $jsonData');
+      log('Sent a message: "$eventType", data: $jsonData');
     } else {
-      debugPrint('Failed to send a message - client is null or not connected');
+      log('Failed to send a message - client is null or not connected');
     }
   }
 
   Future<dynamic> _makeCoreGetRequest(CoreGetRequest request,
       [Map<String, dynamic>? queryParameters]) async {
-    Response response = await _client.get(Uri.http(
+    final Response response = await _client.get(Uri.http(
         'localhost:29873',
         '/controller/core/' +
             (coreGetRequestConverter.inverse[request] ??
                 coreGetRequestConverter.inverse[CoreGetRequest.unknown]!),
         queryParameters));
     if (response.statusCode == 200) {
-      String body = response.body;
+      final String body = response.body;
 
-      debugPrint('Received a response: $body');
+      log('Received a response: $body');
 
       return jsonDecode(body);
     }
-    debugPrint('Host responded with an error!');
+    log('Host responded with an error!');
+
     return null;
   }
 
   Future<void> _makeCorePostRequest(CorePostRequest request,
-          [Map<String, dynamic>? body]) async =>
+          [Map<String, String>? body]) async =>
       _client.post(
           Uri.http(
               'localhost:29873',
@@ -207,7 +214,7 @@ class ClientRepository {
           body: body);
 
   Future<void> _makePublicPostRequest(PublicPostRequest request,
-          [Map<String, dynamic>? body]) async =>
+          [Map<String, String>? body]) async =>
       _client.post(
           Uri.http(
               'localhost:29873',

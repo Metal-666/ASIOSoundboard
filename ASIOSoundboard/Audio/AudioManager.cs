@@ -15,21 +15,6 @@ namespace ASIOSoundboard.Audio {
 	/// </summary>
 	public class AudioManager {
 
-		/// <summary>
-		/// Handle that will be used for retrieving a device object.
-		/// </summary>
-		public string? AudioDevice { get; set; }
-
-		/// <summary>
-		/// This property will be treated as user's preferred sample rate. Doesn't actually set the Audio Device's sample rate.
-		/// </summary>
-		public int SampleRate { get; set; }
-
-		/// <summary>
-		/// Combined with each tile's own volume during playback.
-		/// </summary>
-		public float Volume { get; set; }
-
 		private readonly ILogger<AudioManager> logger;
 
 		public event EventHandler<AudioEngineStatusEventArgs>? OnAudioEngineStatus;
@@ -37,30 +22,133 @@ namespace ASIOSoundboard.Audio {
 		public event EventHandler<FileErrorEventArgs>? OnFileError;
 		public event EventHandler<FileResampleEventArgs>? OnFileResampleNeeded;
 
-		//This is what I usually refer to as 'Audio Engine' or 'Audio Device'
 		private AsioOut? asioOut;
-		//This is an object that holds all the clips that are currently played by the Audio Engine
-		//Created and destroyed together with Audio Engine
-		private MixingSampleProvider? asioSampleProvider;
+		private MixingSampleProvider? mixingSampleProvider;
+		private VolumeSampleProvider? volumeSampleProvider;
 
 		public AudioManager(ILogger<AudioManager> logger) => this.logger = logger;
 
-		/// <summary>
-		/// Turns the Audio Engine on or off, depending on the current state.
-		/// </summary>
-		public void ToggleAudioEngine() {
+		public void AudioEngineStatus() => OnAudioEngineStatus?.Invoke(this, new AudioEngineStatusEventArgs() {
 
-			if(asioOut == null) {
+			Active = asioOut != null,
 
-				InitialiseASIO();
+		});
+
+		public void StartAudioEngine(string? audioDevice, int? sampleRate, float? volume) {
+
+			if(asioOut != null) {
+
+				OnError?.Invoke(this, new ErrorEventArgs() {
+
+					Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
+					Description = "Audio Engine is already running"
+
+				});
+			
+			}
+
+			else if(audioDevice == null) {
+
+				OnError?.Invoke(this, new ErrorEventArgs() {
+
+					Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
+					Description = "Audio Device not set"
+
+				});
+
+			}
+
+			else if(sampleRate == null) {
+
+				OnError?.Invoke(this, new ErrorEventArgs() {
+
+					Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
+					Description = "Sample Rate not set"
+
+				});
+
+			}
+
+			else if(GetASIODevices().Contains(audioDevice)) {
+
+				Application.Current.Dispatcher.Invoke(() => {
+
+					try {
+
+						asioOut = new AsioOut(audioDevice);
+
+						if(asioOut.IsSampleRateSupported((int) sampleRate)) {
+
+							mixingSampleProvider = new(WaveFormat.CreateIeeeFloatWaveFormat((int) sampleRate, 2)) {
+
+								//I have no idea why this is here, but it is probably important
+								ReadFully = true
+
+							};
+
+							volumeSampleProvider = new(mixingSampleProvider) {
+
+								Volume = volume ?? 1
+
+							};
+
+							asioOut.Init(volumeSampleProvider);
+							asioOut.Play();
+
+							logger.LogInformation("Audio Engine started");
+
+							AudioEngineStatus();
+
+						}
+
+						else {
+
+							OnError?.Invoke(this, new ErrorEventArgs() {
+
+								Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
+								Description = $"Selected Sample Rate is unsupported by {audioDevice}"
+
+							});
+
+							Dispose();
+
+						}
+
+					}
+
+					catch(Exception e) {
+
+						OnError?.Invoke(this, new ErrorEventArgs() {
+
+							Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
+							Description = e.Message
+
+						});
+
+						Dispose();
+
+					}
+
+				});
 
 			}
 
 			else {
 
-				DisposeASIO();
+				OnError?.Invoke(this, new ErrorEventArgs() {
+
+					Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
+					Description = "Selected Audio Device can't be found"
+
+				});
 
 			}
+
+		}
+
+		public void StopAudioEngine() {
+
+			Dispose();
 
 		}
 
@@ -70,53 +158,19 @@ namespace ASIOSoundboard.Audio {
 		/// <param name="volume">Desired volume.</param>
 		public void SetGlobalVolume(double volume) {
 
-			//Make sure our eardrums won't be destroyed
-			Volume = Math.Clamp((float) volume, 0.0f, 2.0f);
+			if(volumeSampleProvider != null) {
 
-			if(asioSampleProvider != null) {
-
-				/*asioSampleProvider.MixerInputs.ToList()
-					.FindAll((ISampleProvider provider) => provider is TileSampleProvider)
-					.Cast<TileSampleProvider>().ToList()
-					.ForEach((TileSampleProvider provider) => SetTileVolume(provider));*/
-
-				asioSampleProvider.MixerInputs.ToList().ForEach((provider) => {
-
-					if(provider is VolumeSampleProvider volumeSampleprovider) {
-
-						volumeSampleprovider.SetVolume(Volume);
-
-					}
-
-				});
+				volumeSampleProvider.Volume = TransformVolume((float) volume);
 
 			}
 
 		}
 
 		/// <summary>
-		/// Sets the volume of an individual tile.
-		/// </summary>
-		/// <param name="provider">TileSampleProvider that holds the reference to desired tile.</param>
-		//private void SetTileVolume(TileSampleProvider provider) => provider.Volume = Volume * provider.Tile.Volume;
-
-		/// <summary>
 		/// Gets an array containing available ASIO devices.
 		/// </summary>
 		/// <returns>An array containing the handles of audio devices, available in this PC.</returns>
 		public static string[] GetASIODevices() => AsioOut.GetDriverNames();
-
-		/// <summary>
-		/// Plays a sound clip, referenced in a specific Tile.
-		/// </summary>
-		/// <param name="id">The id of the tile, that holds the path to a sound clip.</param>
-		/*public void PlayTileById(string? id) {
-
-			Tile tile = Soundboard.Tiles.Where((Tile tile) => tile.Id.Equals(id)).First();
-
-			PlayFile(tile.File, tile);
-
-		}*/
 
 		/// <summary>
 		/// Plays a sound clip located at a specific path.
@@ -129,26 +183,28 @@ namespace ASIOSoundboard.Audio {
 
 			if(asioOut != null) {
 
-				AudioFileReader? source = ValidateFile(file, () => OnFileError?.Invoke(this, new FileErrorEventArgs() {
+				AudioFileReader? source = ValidateAudioFile(file, () => OnFileError?.Invoke(this, new FileErrorEventArgs() {
 
-					Error = "FILE NOT FOUND",
+					Error = FileErrorEventArgs.FILE_NOT_FOUND,
 					Description = "Make sure the requested file is present on your device",
 					File = file
 
-				}), () => OnFileResampleNeeded?.Invoke(this, new FileResampleEventArgs() {
+				}), (sampleRate) => OnFileResampleNeeded?.Invoke(this, new FileResampleEventArgs() {
 
 					Error = "INVALID SAMPLE RATE",
 					Description = "This file uses unsupported sample rate. Do you want to fix it? (Original file won't be changed)",
 					File = file,
-					SampleRate = SampleRate
+					SampleRate = sampleRate
 
 				}));
 
 				if(source != null) {
 
+					source.Volume = TransformVolume(volume);
+
 					logger.LogInformation("Playing audio file: {}", file);
 
-					asioSampleProvider!.AddMixerInput(new VolumeSampleProvider(source, volume));
+					mixingSampleProvider!.AddMixerInput((ISampleProvider) source);
 
 				}
 
@@ -195,7 +251,7 @@ namespace ASIOSoundboard.Audio {
 
 				OnFileError?.Invoke(this, new FileErrorEventArgs() {
 
-					Error = "FILE NOT FOUND",
+					Error = FileErrorEventArgs.FILE_NOT_FOUND,
 					Description = "Make sure the requested file is present on your device",
 					File = file
 
@@ -210,70 +266,9 @@ namespace ASIOSoundboard.Audio {
 		/// </summary>
 		public void StopAllSounds() {
 
-			if(asioSampleProvider != null) {
+			if(mixingSampleProvider != null) {
 
-				asioSampleProvider.RemoveAllMixerInputs();
-
-			}
-
-		}
-
-		/// <summary>
-		/// Starts up the Audio Engine. If it is currently active, disposes it first, making the process a restart.
-		/// </summary>
-		public void InitialiseASIO() {
-
-			DisposeASIO();
-
-			if(GetASIODevices().Contains(AudioDevice)) {
-
-				Application.Current.Dispatcher.Invoke(() => {
-
-					asioOut = new AsioOut(AudioDevice);
-
-					if(asioOut.IsSampleRateSupported(SampleRate)) {
-
-						asioSampleProvider = new(WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, 2)) {
-							
-							//I have no idea why this is here, but it is probably important
-							ReadFully = true
-
-						};
-
-						asioOut.Init(asioSampleProvider);
-						asioOut.Play();
-
-						logger.LogInformation("Audio Engine started");
-
-						OnAudioEngineStatus?.Invoke(this, new AudioEngineStatusEventArgs() { Active = true });
-
-					}
-
-					else {
-
-						OnError?.Invoke(this, new ErrorEventArgs() {
-
-							Error = "SAMPLE RATE NOT SUPPORTED",
-							Description = "The Audio Device you selected doesn't support current sample rate"
-
-						});
-
-						DisposeASIO();
-
-					}
-
-				});
-
-			}
-
-			else {
-
-				OnError?.Invoke(this, new ErrorEventArgs() {
-
-					Error = "DEVICE NOT FOUND",
-					Description = "The Audio Device you intend to use for the Audio Engine was not found on your PC"
-
-				});
+				mixingSampleProvider.RemoveAllMixerInputs();
 
 			}
 
@@ -282,19 +277,21 @@ namespace ASIOSoundboard.Audio {
 		/// <summary>
 		/// Destroys the Audio Engine.
 		/// </summary>
-		public void DisposeASIO() {
+		public void Dispose() {
 
 			if(asioOut != null) {
 
 				asioOut.Dispose();
 				asioOut = null;
-				asioSampleProvider = null;
-
-				logger.LogInformation("Audio Engine stopped");
-
-				OnAudioEngineStatus?.Invoke(this, new AudioEngineStatusEventArgs() { Active = false });
 
 			}
+
+			mixingSampleProvider = null;
+			volumeSampleProvider = null;
+
+			logger.LogInformation("Audio Engine stopped");
+
+			AudioEngineStatus();
 
 		}
 
@@ -305,7 +302,7 @@ namespace ASIOSoundboard.Audio {
 		/// <param name="notFound">Called if the file is missing.</param>
 		/// <param name="invalidSampleRate">Called if file's sample doesn't match the preffered one.</param>
 		/// <returns><c>null</c> if the file could not be loaded, otherwise the <c>AudioFileReader</c> created from the file.</returns>
-		private AudioFileReader? ValidateFile(string? file, Action notFound, Action invalidSampleRate) {
+		private AudioFileReader? ValidateAudioFile(string? file, Action notFound, Action<int> invalidSampleRate) {
 
 			logger.LogInformation("Validating audio file: {}", file);
 			
@@ -313,11 +310,11 @@ namespace ASIOSoundboard.Audio {
 
 				AudioFileReader reader = new(file);
 
-				if(reader.WaveFormat.SampleRate != SampleRate) {
+				if(reader.WaveFormat.SampleRate != mixingSampleProvider?.WaveFormat.SampleRate) {
 
 					logger.LogInformation("Audio file uses invalid sample rate: {}", reader.WaveFormat.SampleRate);
 
-					invalidSampleRate?.Invoke();
+					invalidSampleRate?.Invoke(mixingSampleProvider?.WaveFormat.SampleRate ?? -1);
 
 				}
 				
@@ -341,6 +338,14 @@ namespace ASIOSoundboard.Audio {
 
 		}
 
+		private static float TransformVolume(float volume) {
+
+			volume = Math.Clamp(volume, 0.0f, 2.0f);
+
+			return (float) (1.7 * Math.Pow(volume, 1.8) - Math.Pow(volume, 1.6));
+
+		}
+
 		public class AudioEngineStatusEventArgs : EventArgs {
 
 			[JsonPropertyName("active")]
@@ -350,6 +355,8 @@ namespace ASIOSoundboard.Audio {
 
 		public class ErrorEventArgs : EventArgs {
 
+			public const string CANT_START_AUDIO_ENGINE = "CAN'T START AUDIO ENGINE";
+
 			[JsonPropertyName("error")]
 			public string Error { get; set; } = "GENERIC ERROR";
 			[JsonPropertyName("description")]
@@ -358,6 +365,8 @@ namespace ASIOSoundboard.Audio {
 		}
 
 		public class FileErrorEventArgs : ErrorEventArgs {
+
+			public const string FILE_NOT_FOUND = "FILE NOT FOUND";
 
 			[JsonPropertyName("file")]
 			public string? File { get; set; }

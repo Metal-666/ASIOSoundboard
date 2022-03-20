@@ -33,8 +33,8 @@ class BoardView extends StatelessWidget {
             Navigator.of(context).pop();
           }
         },
-        listenWhen: (BoardState previous, BoardState current) =>
-            (previous.dialog == null) ^ (current.dialog == null),
+        listenWhen: (oldState, newState) =>
+            (oldState.dialog == null) ^ (newState.dialog == null),
         builder: (context, state) => BlocListener<BoardBloc, BoardState>(
           listener: (context, state) {
             if (state.encodedAHKHandle != null) {
@@ -103,7 +103,7 @@ class BoardView extends StatelessWidget {
                   (index) => _tile(
                     context,
                     state.soundboard?.tiles[index] ??
-                        const Tile('null', 'new_tile', 'null', 1),
+                        const Tile('null', 'new_tile', 1),
                   ),
                 ),
               );
@@ -136,14 +136,14 @@ class BoardView extends StatelessWidget {
     return BlocBuilder<BoardBloc, BoardState>(
       builder: (context, state) => GestureDetector(
         onSecondaryTap: () =>
-            context.read<BoardBloc>().add(TileRightClick(tile.id)),
+            context.read<BoardBloc>().add(TileRightClick(tile)),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
-          child: state.rightClickedTile != tile.id
+          child: state.rightClickedTile != tile
               ? SizedBox.expand(
                   child: ElevatedButton(
                     onPressed: () =>
-                        context.read<BoardBloc>().add(PlayTileById(tile.id)),
+                        context.read<BoardBloc>().add(PlayTile(tile)),
                     child: Text(tile.name ?? 'new_tile'),
                   ),
                 )
@@ -157,7 +157,7 @@ class BoardView extends StatelessWidget {
                       _backButton(
                         text: 'Delete',
                         onPressed: () =>
-                            context.read<BoardBloc>().add(DeleteTile(tile.id)),
+                            context.read<BoardBloc>().add(DeleteTile(tile)),
                         iconData: Icons.close,
                       ),
                       _backDivider(),
@@ -165,7 +165,7 @@ class BoardView extends StatelessWidget {
                         text: 'Copy AHK Handle',
                         onPressed: () => context
                             .read<BoardBloc>()
-                            .add(EncodeAHKHandle(tile.name)),
+                            .add(EncodeAHKHandle(tile)),
                         iconData: Icons.code,
                       ),
                     ],

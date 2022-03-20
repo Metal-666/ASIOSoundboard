@@ -1,12 +1,16 @@
+import 'package:asio_soundboard/bloc/settings/state.dart';
+import 'package:asio_soundboard/util/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:system_theme/system_theme.dart';
 
 import 'bloc/board/bloc.dart';
+import 'bloc/board/events.dart' as bloc_events;
 import 'bloc/root/bloc.dart';
 import 'bloc/root/events.dart';
 import 'bloc/root/state.dart';
 import 'bloc/settings/bloc.dart';
-import 'bloc/settings/events.dart';
+import 'bloc/settings/events.dart' as settings_events;
 import 'data/network/client_repository.dart';
 import 'data/settings/settings_repository.dart';
 import 'views/board.dart';
@@ -20,21 +24,72 @@ final RootBloc _rootBloc = RootBloc(_clientRepository, _settingsRepository);
 final BoardBloc _boardBloc = BoardBloc(_clientRepository);
 final SettingsBloc _settingsBloc =
     SettingsBloc(_clientRepository, _settingsRepository);
-// To create our theme we first initalize a simple dark theme and then modify it's values in the MaterialApp constructor.
-final ThemeData _theme = ThemeData.dark();
 
+final Color originalAccentColor = Colors.deepPurple[500]!;
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await SystemTheme.accentInstance.load();
+
   await _settingsRepository.init();
   _clientRepository.init();
+
+  final ThemeData theme = ThemeData.dark();
+
+  Color? accentColor;
+
+  switch (SettingsState.accentModeConverter[_settingsRepository.accentMode] ??
+      AccentMode.original) {
+    original:
+    case AccentMode.original:
+      {
+        accentColor = originalAccentColor;
+
+        break;
+      }
+    case AccentMode.system:
+      {
+        accentColor = SystemTheme.accentInstance.accent;
+
+        break;
+      }
+    case AccentMode.custom:
+      {
+        String? color = _settingsRepository.customAccentColor;
+
+        if (color != null) {
+          accentColor = HexColor.fromHex(color);
+
+          break;
+        }
+
+        continue original;
+      }
+  }
+
+  await _clientRepository.setGlobalVolume(_settingsRepository.globalVolume);
+
+  if (_settingsRepository.autoStartEngine) {
+    await _clientRepository.startAudioEngine(
+      _settingsRepository.audioDevice,
+      _settingsRepository.sampleRate,
+      _settingsRepository.globalVolume,
+    );
+  }
 
   runApp(
     MaterialApp(
       title: 'ASIOSoundboard',
-      theme: _theme.copyWith(
-        colorScheme: _theme.colorScheme.copyWith(
-          primary: Colors.deepPurple[500],
+      theme: theme.copyWith(
+        colorScheme: theme.colorScheme.copyWith(
+          primary: accentColor,
           secondary: Colors.white,
+          onPrimary: accentColor.computeLuminance() > 0.5
+              ? Colors.black
+              : Colors.white,
+          onSecondary: Colors.black,
         ),
+        toggleableActiveColor: accentColor,
       ),
       home: MultiRepositoryProvider(
         providers: [
@@ -46,7 +101,7 @@ void main() async {
           ),
         ],
         child: BlocProvider<RootBloc>.value(
-          value: _rootBloc,
+          value: _rootBloc..add(AppLoaded()),
           child: Root(),
         ),
       ),
@@ -93,8 +148,23 @@ class Root extends StatelessWidget {
           builder: (context, state) => Row(
             children: <Widget>[
               Expanded(
-                  child: Text(
-                      'Audio Engine Status: ${state.isAudioEngineRunning ? 'RUNNING' : 'STOPPED'}')),
+                child: Text.rich(
+                  TextSpan(
+                    text: 'Audio Engine Status: ',
+                    children: <InlineSpan>[
+                      TextSpan(
+                        text:
+                            state.isAudioEngineRunning ? 'RUNNING' : 'STOPPED',
+                        style: TextStyle(
+                          color: state.isAudioEngineRunning
+                              ? Colors.green
+                              : Colors.red,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
               ElevatedButton(
                 onPressed: () =>
                     context.read<RootBloc>().add(AudioEngineToggled()),
@@ -153,11 +223,11 @@ class Root extends StatelessWidget {
           controller: pageController,
           children: <Widget>[
             BlocProvider<BoardBloc>.value(
-              value: _boardBloc,
+              value: _boardBloc..add(bloc_events.PageLoaded()),
               child: BoardView(),
             ),
             BlocProvider<SettingsBloc>.value(
-              value: _settingsBloc..add(PageLoaded()),
+              value: _settingsBloc..add(settings_events.PageLoaded()),
               child: SettingsView(),
             ),
           ],

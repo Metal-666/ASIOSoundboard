@@ -1,6 +1,8 @@
-import '../../data/network/client_events.dart';
+import '../../data/network/websocket_events.dart';
 
 abstract class RootEvent {}
+
+class AppLoaded extends RootEvent {}
 
 class WebsocketEvent extends RootEvent {
   final WebsocketMessage message;

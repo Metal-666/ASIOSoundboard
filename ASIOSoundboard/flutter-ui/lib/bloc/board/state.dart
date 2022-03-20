@@ -4,7 +4,7 @@ class BoardState {
   final Soundboard? soundboard;
   final NewTileDialog? dialog;
 
-  final String? rightClickedTile;
+  final Tile? rightClickedTile;
 
   final String? encodedAHKHandle;
 
@@ -14,7 +14,7 @@ class BoardState {
   BoardState copyWith(
           {Soundboard? Function()? soundboard,
           NewTileDialog? Function()? dialog,
-          String? Function()? rightClickedTile,
+          Tile? Function()? rightClickedTile,
           String? Function()? encodedAHKHandle}) =>
       BoardState(soundboard == null ? this.soundboard : soundboard.call(),
           dialog == null ? this.dialog : dialog.call(),

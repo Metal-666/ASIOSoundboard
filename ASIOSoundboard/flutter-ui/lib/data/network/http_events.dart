@@ -11,13 +11,13 @@ enum CoreGetRequest {
 
 enum CorePostRequest {
   unknown,
-  audioDevice,
-  sampleRate,
   globalVolume,
-  toggleAudioEngine,
+  startAudioEngine,
+  stopAudioEngine,
   fileResampleNeeded,
   saveFile,
   resampleFile,
+  reload,
 }
 
 enum PublicPostRequest {
@@ -41,12 +41,12 @@ final BiMap<String, CorePostRequest> corePostRequestConverter =
     BiMap<String, CorePostRequest>()
       ..addAll(<String, CorePostRequest>{
         'unknown': CorePostRequest.unknown,
-        'audio-device': CorePostRequest.audioDevice,
-        'sample-rate': CorePostRequest.sampleRate,
-        'global-colume': CorePostRequest.globalVolume,
-        'toggle-audio-engine': CorePostRequest.toggleAudioEngine,
+        'global-volume': CorePostRequest.globalVolume,
+        'start-audio-engine': CorePostRequest.startAudioEngine,
+        'stop-audio-engine': CorePostRequest.stopAudioEngine,
         'save-file': CorePostRequest.saveFile,
         'resample-file': CorePostRequest.resampleFile,
+        'reload': CorePostRequest.reload,
       });
 
 final BiMap<String, PublicPostRequest> publicPostRequestConverter =

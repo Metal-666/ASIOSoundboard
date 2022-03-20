@@ -46,11 +46,41 @@ class SettingsRepository {
       preferences.setDouble(_Settings.tileSize, tileSize);
     }
   }
+
+  bool get autoStartEngine =>
+      preferences.getBool(_Settings.autoStartEngine) ?? false;
+
+  set autoStartEngine(bool autoStartEngine) =>
+      preferences.setBool(_Settings.autoStartEngine, autoStartEngine);
+
+  String? get accentMode => preferences.getString(_Settings.accentMode);
+
+  set accentMode(String? accentMode) {
+    if (accentMode == null) {
+      preferences.remove(_Settings.accentMode);
+    } else {
+      preferences.setString(_Settings.accentMode, accentMode);
+    }
+  }
+
+  String? get customAccentColor =>
+      preferences.getString(_Settings.customAccentColor);
+
+  set customAccentColor(String? customAccentColor) {
+    if (customAccentColor == null) {
+      preferences.remove(_Settings.customAccentColor);
+    } else {
+      preferences.setString(_Settings.customAccentColor, customAccentColor);
+    }
+  }
 }
 
 class _Settings {
   static const String audioDevice = 'audioDevice',
       sampleRate = 'sampleRate',
       globalVolume = 'globalVolume',
-      tileSize = 'tileSize';
+      tileSize = 'tileSize',
+      autoStartEngine = 'autoStartEngine',
+      accentMode = 'accentMode',
+      customAccentColor = 'customAccentColor';
 }

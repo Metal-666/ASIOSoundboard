@@ -1,3 +1,5 @@
+import 'package:flex_color_picker/flex_color_picker.dart';
+
 import '../bloc/root/bloc.dart';
 import '../bloc/root/events.dart';
 import '../bloc/root/state.dart';
@@ -15,9 +17,73 @@ class SettingsView extends StatelessWidget {
   SettingsView({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-        constraints: const BoxConstraints.expand(),
-        child: _scrollView(),
+  Widget build(BuildContext context) =>
+      BlocListener<SettingsBloc, SettingsState>(
+        listener: (context, state) {
+          if (state.pickingAccentColor != null) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => BlocProvider<SettingsBloc>.value(
+                value: context.read<SettingsBloc>(),
+                child: AlertDialog(
+                  contentPadding: EdgeInsets.zero,
+                  scrollable: true,
+                  content: ColorPicker(
+                    title: Text(
+                      'Pick custom accent color',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+                      copyFormat: ColorPickerCopyFormat.hexRRGGBB,
+                    ),
+                    heading: const SizedBox(height: 20),
+                    pickersEnabled: const <ColorPickerType, bool>{
+                      ColorPickerType.primary: false,
+                      ColorPickerType.accent: false,
+                      ColorPickerType.wheel: true,
+                    },
+                    wheelDiameter: 300,
+                    wheelHasBorder: true,
+                    enableShadesSelection: false,
+                    tonalSubheading: const Text('Select color shade'),
+                    enableTonalPalette: true,
+                    showColorName: true,
+                    showColorCode: true,
+                    colorCodeHasColor: true,
+                    color: state.pickingAccentColor ?? Colors.black,
+                    onColorChanged: (value) => context
+                        .read<SettingsBloc>()
+                        .add(UpdateCustomAccentColor(value)),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Cancel'),
+                      onPressed: () => context
+                          .read<SettingsBloc>()
+                          .add(CancelPickingCustomAccentColor()),
+                    ),
+                    ElevatedButton(
+                      child: const Text('Done'),
+                      onPressed: () => context
+                          .read<SettingsBloc>()
+                          .add(FinishedPickingCustomAccentColor()),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          } else {
+            Navigator.of(context).pop();
+          }
+        },
+        listenWhen: (oldState, newState) =>
+            (oldState.pickingAccentColor == null) ^
+            (newState.pickingAccentColor == null),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints.expand(),
+          child: _scrollView(),
+        ),
       );
 
   /// The root panel of the settings. Contains cards with different settings categories.
@@ -27,6 +93,7 @@ class SettingsView extends StatelessWidget {
           children: <String, Widget>{
             'Audio': _audioSettings(),
             'Board': _boardSettings(),
+            'UI': _uiSettings(),
           }
               .entries
               .map<Widget>(
@@ -83,10 +150,8 @@ class SettingsView extends StatelessWidget {
                     ),
                   )
                   .toList(),
-              onChanged: (String? value) {
-                debugPrint('New Audio Device selected: $value');
-                context.read<SettingsBloc>().add(ASIODeviceChanged(value));
-              },
+              onChanged: (value) =>
+                  context.read<SettingsBloc>().add(ASIODeviceChanged(value)),
             ),
             const Text('Sample Rate'),
             DropdownButton<int?>(
@@ -99,26 +164,35 @@ class SettingsView extends StatelessWidget {
                     ),
                   )
                   .toList(),
-              onChanged: (int? value) =>
+              onChanged: (value) =>
                   context.read<SettingsBloc>().add(SampleRateChanged(value)),
             ),
-            Column(
-              children: <Widget>[
-                const Text('Global Volume'),
-                Slider(
-                  min: 0,
-                  divisions: 10,
-                  max: 2,
-                  label: (() => '${(state.volume * 100).toInt()}%')(),
-                  value: state.volume,
-                  onChangeEnd: (double value) => context
-                      .read<SettingsBloc>()
-                      .add(VolumeChangedFinal(value)),
-                  onChanged: (double value) =>
-                      context.read<SettingsBloc>().add(VolumeChanged(value)),
-                )
-              ],
-            )
+            const Text('Global Volume'),
+            Slider(
+              min: 0,
+              divisions: 10,
+              max: 2,
+              label: (() => '${(state.volume * 100).toInt()}%')(),
+              value: state.volume,
+              onChangeEnd: (value) =>
+                  context.read<SettingsBloc>().add(VolumeChangedFinal(value)),
+              onChanged: (value) =>
+                  context.read<SettingsBloc>().add(VolumeChanged(value)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  const Text('Start Engine when app launches?'),
+                  Switch(
+                      value: state.autoStartEngine,
+                      onChanged: (value) => context
+                          .read<SettingsBloc>()
+                          .add(AutoStartEngineChanged(value))),
+                ],
+              ),
+            ),
           ],
         ),
       );
@@ -155,12 +229,44 @@ class SettingsView extends StatelessWidget {
                 }
               }(),
               value: state.tileSize,
-              onChangeEnd: (double value) =>
+              onChangeEnd: (value) =>
                   context.read<RootBloc>().add(TileSizeChangedFinal(value)),
-              onChanged: (double value) =>
+              onChanged: (value) =>
                   context.read<RootBloc>().add(TileSizeChanged(value)),
             )
           ],
         ),
       );
+  Widget _uiSettings() => BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, state) => Column(
+            children: <Widget>[
+              const Text('Accent Color'),
+              RadioListTile<AccentMode>(
+                title: const Text('Original'),
+                value: AccentMode.original,
+                groupValue: state.accentMode,
+                onChanged: (value) =>
+                    context.read<SettingsBloc>().add(AccentModeChanged(value)),
+              ),
+              RadioListTile<AccentMode>(
+                title: const Text('System'),
+                value: AccentMode.system,
+                groupValue: state.accentMode,
+                onChanged: (value) =>
+                    context.read<SettingsBloc>().add(AccentModeChanged(value)),
+              ),
+              RadioListTile<AccentMode>(
+                title: const Text('Custom'),
+                value: AccentMode.custom,
+                groupValue: state.accentMode,
+                onChanged: (value) =>
+                    context.read<SettingsBloc>().add(AccentModeChanged(value)),
+                secondary: IconButton(
+                  icon: const Icon(Icons.color_lens),
+                  onPressed: () =>
+                      context.read<SettingsBloc>().add(PickCustomAccentColor()),
+                ),
+              ),
+            ],
+          ));
 }

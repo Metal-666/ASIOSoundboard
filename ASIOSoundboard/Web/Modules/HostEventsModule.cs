@@ -36,6 +36,16 @@ namespace ASIOSoundboard.Web.Modules {
 
 		}
 
+		public void RequestSoundByName(string name) {
+
+			SendMessage("request_sound_by_name", new Dictionary<string, dynamic>() {
+
+				{ "name", name }
+
+			});
+
+		}
+
 		private void AudioEngineStatusHandler(object? sender, AudioEngineStatusEventArgs args) {
 
 			SendMessage("audio_engine_status", args);
@@ -76,14 +86,7 @@ namespace ASIOSoundboard.Web.Modules {
 
 			logger.LogInformation("New client is connecting...");
 
-			//If we already have one client connected, yeet the new one
-			if(ActiveContexts.Count > 1) {
-
-				logger.LogWarning("We already have one connected - yeet the impostor");
-
-				CloseAsync(context);
-
-			}
+			audioManager.AudioEngineStatus();
 
 			return base.OnClientConnectedAsync(context);
 
@@ -152,8 +155,6 @@ namespace ASIOSoundboard.Web.Modules {
 				audioManager.OnError -= ErrorHandler;
 				audioManager.OnFileError -= FileErrorHandler;
 				audioManager.OnFileResampleNeeded -= FileResampleHandler;
-
-				audioManager.DisposeASIO();
 
 			}
 

@@ -18,47 +18,25 @@ class _NewTileDialogState extends State<NewTileDialog> {
   final TextEditingController pathController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 3, top: 5, bottom: 15),
-                  child: Text(
-                    'Add New Tile',
-                    style: Theme.of(context).textTheme.headline6,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: _form(),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    TextButton(
-                      onPressed: () =>
-                          context.read<BoardBloc>().add(NewTileDialogClosed()),
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => context
-                          .read<BoardBloc>()
-                          .add(NewTileDialogSubmitted()),
-                      child: const Text('Add'),
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
+  Widget build(BuildContext context) => AlertDialog(
+        scrollable: true,
+        title: Text(
+          'Add New Tile',
+          style: Theme.of(context).textTheme.headline6,
         ),
+        content: _form(),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () =>
+                context.read<BoardBloc>().add(NewTileDialogClosed()),
+          ),
+          ElevatedButton(
+            child: const Text('Add'),
+            onPressed: () =>
+                context.read<BoardBloc>().add(NewTileDialogSubmitted()),
+          )
+        ],
       );
 
   /// A panel in the middle of the dialog, has most of it's important stuff.

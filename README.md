@@ -62,3 +62,4 @@ Following libraries and packages are used in this project:
 - [EmbedIO](https://unosquare.github.io/embedio/) - Serving the UI; WebSocket and HTTP communication
 - [flutter_bloc](https://bloclibrary.dev) - Flutter state management
 - [web_socket_channel](https://github.com/dart-lang/web_socket_channel) - Flutter WebSocket client
+- [flex_color_picker](https://github.com/rydmike/flex_color_picker) - Best color picker ever

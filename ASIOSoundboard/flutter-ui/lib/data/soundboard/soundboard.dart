@@ -2,15 +2,15 @@ import 'dart:convert';
 
 /// Represents a serializable collection of Tiles.
 class Soundboard {
-  final List<Tile?> tiles;
+  final List<Tile> tiles;
 
   const Soundboard(this.tiles);
 
-  Soundboard copyWith({List<Tile?> Function()? tiles}) =>
+  Soundboard copyWith({List<Tile> Function()? tiles}) =>
       Soundboard(tiles == null ? this.tiles : tiles.call());
 
   Map<String, dynamic> toMap() => {
-        'tiles': tiles.map((x) => x?.toMap()).toList(),
+        'tiles': tiles.map((x) => x.toMap()).toList(),
       };
 
   factory Soundboard.fromMap(Map<String, dynamic> map) => Soundboard(
@@ -29,11 +29,10 @@ class Soundboard {
 class Tile {
   final String? filePath;
   final String? name;
-  final String? id;
 
   final double? volume;
 
-  const Tile(this.filePath, this.name, this.id, this.volume);
+  const Tile(this.filePath, this.name, this.volume);
 
   Tile copyWith(
           {String? Function()? filePath,
@@ -43,14 +42,13 @@ class Tile {
       Tile(
           filePath == null ? this.filePath : filePath.call(),
           name == null ? this.name : name.call(),
-          id == null ? this.id : id.call(),
           volume == null ? this.volume : volume.call());
 
   Map<String, dynamic> toMap() =>
-      {'file_path': filePath, 'name': name, 'id': id, 'volume': volume};
+      {'file_path': filePath, 'name': name, 'volume': volume};
 
   factory Tile.fromMap(Map<String, dynamic> map) =>
-      Tile(map['file_path'], map['name'], map['id'], map['volume']);
+      Tile(map['file_path'], map['name'], map['volume']);
 
   String toJson() => json.encode(toMap());
 

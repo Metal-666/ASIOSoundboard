@@ -16,6 +16,7 @@ enum WebsocketMessageType {
   error,
   fileError,
   fileResampleNeeded,
+  requestSoundByName
 }
 
 final BiMap<String, WebsocketMessageType> websocketEventsConverter =
@@ -26,6 +27,7 @@ final BiMap<String, WebsocketMessageType> websocketEventsConverter =
         'error': WebsocketMessageType.error,
         'file_error': WebsocketMessageType.fileError,
         'file_resample_nedeed': WebsocketMessageType.fileResampleNeeded,
+        'request_sound_by_name': WebsocketMessageType.requestSoundByName,
       });
 
 /// Holds the data of a message.
@@ -38,10 +40,9 @@ class WebsocketMessageData {
 
   Error? error;
 
-  WebsocketMessageData({
-    this.active,
-    this.error,
-  });
+  String? name;
+
+  WebsocketMessageData({this.active, this.error, this.name});
 
   WebsocketMessageData.audioEngineStatus(this.active);
   WebsocketMessageData.error(this.error);
@@ -54,7 +55,8 @@ class WebsocketMessageData {
   factory WebsocketMessageData.fromMap(Map<String, dynamic> map) =>
       WebsocketMessageData(
         active: map['active'],
-        error: map['error'] == null ? null : Error.fromJson(map['error']),
+        error: map['error'] == null ? null : Error.fromMap(map['error']),
+        name: map['name'],
       );
 
   String toJson() {

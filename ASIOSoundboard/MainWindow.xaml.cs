@@ -27,6 +27,8 @@ namespace ASIOSoundboard {
 
 		}
 
+		public void ReloadApp() => WebView.Reload();
+
 	}
 
 }

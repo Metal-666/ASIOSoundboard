@@ -1,4 +1,5 @@
 ﻿using ASIOSoundboard.Audio;
+using ASIOSoundboard.Web.Modules;
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
@@ -16,12 +17,24 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		private readonly AudioManager audioManager;
 
-		public PublicController(AudioManager audioManager, ILogger logger) {
+		private readonly HostEventsModule hostEventsModule;
+
+		public PublicController(AudioManager audioManager, HostEventsModule hostEventsModule, ILogger logger) {
 
 			this.audioManager = audioManager;
+			this.hostEventsModule = hostEventsModule;
 			this.logger = logger;
 
 		}
+
+		#region Verb: ANY
+
+		[Route(HttpVerbs.Any, "/unknown")]
+		public void Unknown() => logger.LogWarning("Unknown request");
+
+		#endregion
+
+		#region Verb: POST
 
 		/// <summary>
 		/// Plays a sound from a Tile (or all tiles, if multiple where found) with the provided name.
@@ -30,11 +43,26 @@ namespace ASIOSoundboard.Web.Controllers {
 		[Route(HttpVerbs.Post, "/play")]
 		public async void Play() {
 
-			NameValueCollection query = await HttpContext.GetRequestFormDataAsync();
+			NameValueCollection form = await HttpContext.GetRequestFormDataAsync();
 
-			logger.LogInformation("Playing file ({})", query.Get("file"));
+			logger.LogInformation("Playing file ({})", form.Get("file"));
 
-			audioManager.PlayFile(query.Get("file"), float.Parse(query.Get("volume") ?? "1"));
+			audioManager.PlayFile(form.Get("file"), float.Parse(form.Get("volume") ?? "1"));
+
+		}
+
+		[Route(HttpVerbs.Post, "/request-play")]
+		public async void RequestPlay() {
+
+			string? name = (await HttpContext.GetRequestFormDataAsync()).Get("name");
+
+			logger.LogInformation("Requested file playback ({})", name);
+
+			if(name != null) {
+
+				hostEventsModule.RequestSoundByName(name);
+
+			}
 
 		}
 
@@ -49,6 +77,8 @@ namespace ASIOSoundboard.Web.Controllers {
 			audioManager.StopAllSounds();
 
 		}
+
+		#endregion
 
 	}
 

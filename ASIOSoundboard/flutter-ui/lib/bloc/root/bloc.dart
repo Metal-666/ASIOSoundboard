@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import '../../data/settings/settings_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,15 +15,24 @@ class RootBloc extends Bloc<RootEvent, RootState> {
 
   late final StreamSubscription<WebsocketMessage> _subscription;
 
-  RootBloc(this._clientRepository, this._settingsRepository)
-      : super(
-            RootState(0, null, false, tileSize: _settingsRepository.tileSize)) {
+  RootBloc(
+    this._clientRepository,
+    this._settingsRepository,
+  ) : super(RootState(
+          0,
+          null,
+          false,
+          tileSize: _settingsRepository.tileSize,
+        )) {
     //_clientRepository.restoreTileSize();
 
     // Start listening to the host events. We are mainly interested in global changes like stopping and starting the Audio Engine, and also errors and other notifications.
     _subscription = _clientRepository.eventStream.stream
         .listen((WebsocketMessage message) => add(WebsocketEvent(message)));
 
+    on<AppLoaded>((event, emit) async {
+      /**/
+    });
     on<WebsocketEvent>((event, emit) {
       switch (event.message.type) {
         case WebsocketMessageType.audioEngineStatus:
@@ -41,7 +51,23 @@ class RootBloc extends Bloc<RootEvent, RootState> {
             if (error != null) {
               emit(state.copyWith(
                   errorDialog: () => ErrorDialog(
-                      error: error.error, description: error.description)));
+                        error: error.error,
+                        description: error.description,
+                      )));
+            }
+            break;
+          }
+        case WebsocketMessageType.fileError:
+          {
+            Error? error = event.message.data?.error;
+
+            if (error != null) {
+              emit(state.copyWith(
+                  errorDialog: () => FileErrorDialog(
+                        error: error.error,
+                        description: error.description,
+                        file: error.file,
+                      )));
             }
             break;
           }
@@ -52,10 +78,11 @@ class RootBloc extends Bloc<RootEvent, RootState> {
             if (error != null) {
               emit(state.copyWith(
                   errorDialog: () => ResampleNeededDialog(
-                      error: error.error,
-                      description: error.description,
-                      file: error.file,
-                      sampleRate: error.sampleRate)));
+                        error: error.error,
+                        description: error.description,
+                        file: error.file,
+                        sampleRate: error.sampleRate,
+                      )));
             }
             break;
           }
@@ -66,10 +93,26 @@ class RootBloc extends Bloc<RootEvent, RootState> {
         emit(state.copyWith(viewIndex: () => event.viewIndex)));
     on<ErrorDialogDismissed>(
         (event, emit) => emit(state.copyWith(errorDialog: () => null)));
-    on<AudioEngineToggled>(
-        (event, emit) => _clientRepository.toggleAudioEngine());
-    on<FileResampleRequested>((event, emit) =>
-        _clientRepository.resampleFile(event.file, event.sampleRate));
+    on<AudioEngineToggled>((event, emit) async {
+      if (state.isAudioEngineRunning) {
+        await _clientRepository.stopAudioEngine();
+      } else {
+        await _clientRepository.startAudioEngine(
+          _settingsRepository.audioDevice,
+          _settingsRepository.sampleRate,
+          _settingsRepository.globalVolume,
+        );
+      }
+    });
+    on<FileResampleRequested>((event, emit) async {
+      if (event.file != null && event.sampleRate != null) {
+        log('Resampling file (${event.file} => ${event.sampleRate})');
+
+        await _clientRepository.resampleFile(event.file!, event.sampleRate!);
+      } else {
+        log('Can\'t resample file - path or sample rate is null');
+      }
+    });
     on<TileSizeChanged>(
         (event, emit) => emit(state.copyWith(tileSize: () => event.tileSize)));
     on<TileSizeChangedFinal>(

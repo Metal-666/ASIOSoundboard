@@ -1,12 +1,15 @@
-import '../../data/network/client_events.dart';
+import '../../data/network/websocket_events.dart';
+import '../../data/soundboard/soundboard.dart';
 
 abstract class BoardEvent {}
 
-abstract class IdEvent extends BoardEvent {
-  final String? id;
+abstract class TileEvent extends BoardEvent {
+  final Tile tile;
 
-  IdEvent(this.id);
+  TileEvent(this.tile);
 }
+
+class PageLoaded extends BoardEvent {}
 
 class WebsocketEvent extends BoardEvent {
   final WebsocketMessage message;
@@ -14,8 +17,8 @@ class WebsocketEvent extends BoardEvent {
   WebsocketEvent(this.message);
 }
 
-class PlayTileById extends IdEvent {
-  PlayTileById(String? id) : super(id);
+class PlayTile extends TileEvent {
+  PlayTile(Tile tile) : super(tile);
 }
 
 class AddNewTile extends BoardEvent {}
@@ -46,16 +49,16 @@ class NewTileVolumeChanged extends BoardEvent {
 
 class StopAllSound extends BoardEvent {}
 
-class TileRightClick extends IdEvent {
-  TileRightClick(String? id) : super(id);
+class TileRightClick extends TileEvent {
+  TileRightClick(Tile tile) : super(tile);
 }
 
-class DeleteTile extends IdEvent {
-  DeleteTile(String? id) : super(id);
+class DeleteTile extends TileEvent {
+  DeleteTile(Tile tile) : super(tile);
 }
 
-class EncodeAHKHandle extends IdEvent {
-  EncodeAHKHandle(String? id) : super(id);
+class EncodeAHKHandle extends TileEvent {
+  EncodeAHKHandle(Tile tile) : super(tile);
 }
 
 class SaveSoundboard extends BoardEvent {}

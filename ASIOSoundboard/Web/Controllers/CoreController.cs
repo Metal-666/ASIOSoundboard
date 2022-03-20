@@ -3,6 +3,8 @@ using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Threading.Tasks;
@@ -16,6 +18,8 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		private readonly AudioManager audioManager;
 
+		public event EventHandler? OnAppReloadRequest;
+
 		public CoreController(AudioManager audioManager, ILogger logger) {
 
 			this.audioManager = audioManager;
@@ -23,15 +27,29 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		}
 
+		#region Verb: ANY
+
 		[Route(HttpVerbs.Any, "/unknown")]
 		public void Unknown() => logger.LogWarning("Unknown request");
+
+		#endregion
+
+		#region Verb: GET
 
 		[Route(HttpVerbs.Get, "/audio-devices")]
 		public async Task AudioDevices() {
 
 			logger.LogInformation("Listing audio devices");
 
-			await HttpContext.SendDataAsync(AudioManager.GetASIODevices());
+			string[]? asioDevices = AudioManager.GetASIODevices();
+
+			logger.LogInformation("Fetched list: {}, sending...", asioDevices);
+
+			await HttpContext.SendDataAsync(new Dictionary<string, string[]>{
+
+				{ "devices", asioDevices }
+
+			});
 			
 		}
 
@@ -40,7 +58,11 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			logger.LogInformation("Listing sample rates");
 
-			await HttpContext.SendDataAsync(new int[] { 44100, 48000, 88200, 96000, 176400, 192000 });
+			await HttpContext.SendDataAsync(new Dictionary<string, int[]>{
+
+				{ "rates", new int[] { 44100, 48000, 88200, 96000, 176400, 192000 } }
+
+			});
 
 		}
 
@@ -51,7 +73,11 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			string? file = await System.Windows.Application.Current.Dispatcher.Invoke(PickFileTask);
 
-			await HttpContext.SendDataAsync(file ?? "");
+			await HttpContext.SendDataAsync(new Dictionary<string, string>() {
+			
+				{ "file", file ?? "" }
+				
+			});
 
 		}
 
@@ -63,8 +89,12 @@ namespace ASIOSoundboard.Web.Controllers {
 			NameValueCollection query = HttpContext.GetRequestQueryData();
 
 			string? content = await System.Windows.Application.Current.Dispatcher.Invoke(() => LoadFileTask(query.Get("filter")));
-
-			await HttpContext.SendDataAsync(content ?? "");
+			
+			await HttpContext.SendDataAsync(new Dictionary<string, string?>() {
+			
+				{ "content", content }
+			
+			});
 
 		}
 
@@ -77,43 +107,62 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			bool exists = await System.Windows.Application.Current.Dispatcher.Invoke(() => FileExistsTask(query.Get("path")));
 
-			await HttpContext.SendDataAsync(exists);
+			await HttpContext.SendDataAsync(new Dictionary<string, bool>() {
+
+				{ "exists", exists }
+
+			});
 
 		}
 
-		[Route(HttpVerbs.Post, "/audio-device")]
-		public async void AudioDevice() {
+		#endregion
 
-			logger.LogInformation("Setting Audio Device");
+		#region Verb: POST
 
-			audioManager.AudioDevice = (await HttpContext.GetRequestFormDataAsync()).Get("device");
+		[Route(HttpVerbs.Post, "/start-audio-engine")]
+		public async void StartAudioEngine() {
+
+			NameValueCollection form = await HttpContext.GetRequestFormDataAsync();
+
+			string? audioDevice = form.Get("device");
+			int? sampleRate = null;
+			float? globalVolume = null;
+
+			if(int.TryParse(form.Get("rate"), out int rate)) {
+
+				sampleRate = rate;
+
+			}
+
+			if(float.TryParse(form.Get("volume"), out float volume)) {
+
+				globalVolume = volume;
+
+			}
+
+			logger.LogInformation("Starting Audio Engine with AudioEngine={}, SampleRate={}, GlobalVolume={}", audioDevice, sampleRate, globalVolume);
+
+			audioManager.StartAudioEngine(audioDevice, sampleRate, globalVolume);
 
 		}
 
-		[Route(HttpVerbs.Post, "/sample-rate")]
-		public async void SampleRate() {
+		[Route(HttpVerbs.Post, "/stop-audio-engine")]
+		public void StopAudioEngine() {
 
-			logger.LogInformation("Setting Sample Rate");
+			logger.LogInformation("Stopping Audio Engine");
 
-			audioManager.SampleRate = int.Parse((await HttpContext.GetRequestFormDataAsync()).Get("rate") ?? "0");
+			audioManager.StopAudioEngine();
 
 		}
 
 		[Route(HttpVerbs.Post, "/global-volume")]
 		public async void GlobalVolume() {
 
-			logger.LogInformation("Setting Global Volume");
+			float globalVolume = float.Parse((await HttpContext.GetRequestFormDataAsync()).Get("volume") ?? "1");
 
-			audioManager.SetGlobalVolume(float.Parse((await HttpContext.GetRequestFormDataAsync()).Get("volume") ?? "1"));
+			logger.LogInformation("Setting Global Volume to {}", globalVolume);
 
-		}
-
-		[Route(HttpVerbs.Post, "/toggle-audio-engine")]
-		public void ToggleAudioEngine() {
-
-			logger.LogInformation("Toggling Audio Engine");
-
-			audioManager.ToggleAudioEngine();
+			audioManager.SetGlobalVolume(globalVolume);
 
 		}
 
@@ -154,6 +203,19 @@ namespace ASIOSoundboard.Web.Controllers {
 			audioManager.ResampleFile(form.Get("file"), int.Parse(form.Get("rate") ?? "48000"));
 
 		}
+
+		[Route(HttpVerbs.Post, "/reload")]
+		public void Reload() {
+
+			logger.LogInformation("Reloading app");
+
+			OnAppReloadRequest?.Invoke(this, new EventArgs());
+
+		}
+
+		#endregion
+
+		#region Tasks
 
 		private async Task<string?> PickFileTask() {
 
@@ -197,6 +259,8 @@ namespace ASIOSoundboard.Web.Controllers {
 			return File.Exists(path);
 
 		}
+
+		#endregion
 
 	}
 
