@@ -6,6 +6,7 @@ enum CoreGetRequest {
   sampleRates,
   pickFile,
   loadFile,
+  readFile,
   fileExists,
 }
 
@@ -34,6 +35,7 @@ final BiMap<String, CoreGetRequest> coreGetRequestConverter =
         'sample-rates': CoreGetRequest.sampleRates,
         'pick-file': CoreGetRequest.pickFile,
         'load-file': CoreGetRequest.loadFile,
+        'read-file': CoreGetRequest.readFile,
         'file-exists': CoreGetRequest.fileExists,
       });
 

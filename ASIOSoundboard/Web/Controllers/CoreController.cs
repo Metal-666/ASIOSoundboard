@@ -1,4 +1,5 @@
 ﻿using ASIOSoundboard.Audio;
+using ASIOSoundboard.Web.Modules;
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
@@ -18,11 +19,14 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		private readonly AudioManager audioManager;
 
+		private readonly HostEventsModule hostEventsModule;
+
 		public event EventHandler? OnAppReloadRequest;
 
-		public CoreController(AudioManager audioManager, ILogger logger) {
+		public CoreController(AudioManager audioManager, HostEventsModule hostEventsModule, ILogger logger) {
 
 			this.audioManager = audioManager;
+			this.hostEventsModule = hostEventsModule;
 			this.logger = logger;
 
 		}
@@ -98,6 +102,43 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		}
 
+		[Route(HttpVerbs.Get, "/read-file")]
+		public async Task ReadFile() {
+
+			logger.LogInformation("Loading a file");
+
+			string? path = HttpContext.GetRequestQueryData().Get("path");
+
+			string? content = null;
+
+			if(!string.IsNullOrWhiteSpace(path) && File.Exists(path)) {
+
+				content = File.ReadAllText(path);
+
+				await HttpContext.SendDataAsync(new Dictionary<string, string?>() {
+
+					{ "content", content }
+
+				});
+
+			}
+
+			else {
+
+				hostEventsModule.FileErrorHandler(this, new AudioManager.FileErrorEventArgs() {
+
+					Error = AudioManager.FileErrorEventArgs.CANT_READ_FILE,
+					Description = "File path is empty or file doesn't exist",
+					File = path
+
+				});
+
+				HttpContext.Response.StatusCode = 500;
+
+			}
+
+		}
+
 		[Route(HttpVerbs.Get, "/file-exists")]
 		public async Task FileExists() {
 
@@ -167,27 +208,17 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Post, "/save-file")]
-		public async void SaveFile() {
+		public async Task SaveFile() {
 
 			logger.LogInformation("Saving a file");
 
 			NameValueCollection form = await HttpContext.GetRequestFormDataAsync();
 
-			System.Windows.Application.Current.Dispatcher.Invoke(() => {
+			string? path = await System.Windows.Application.Current.Dispatcher.Invoke(() => SaveFileTask(form.Get("filter"), form.Get("default_ext"), form.Get("content")));
 
-				SaveFileDialog dialog = new() {
+			await HttpContext.SendDataAsync(new Dictionary<string, string?>{
 
-					AddExtension = true,
-					Filter = form.Get("filter"),
-					DefaultExt = form.Get("default_ext"),
-
-				};
-
-				if(dialog.ShowDialog() == DialogResult.OK) {
-
-					File.WriteAllText(dialog.FileName, form.Get("content"));
-
-				}
+				{ "path", path }
 
 			});
 
@@ -257,6 +288,28 @@ namespace ASIOSoundboard.Web.Controllers {
 		private async Task<bool> FileExistsTask(string? path) {
 
 			return File.Exists(path);
+
+		}
+
+		private async Task<string?> SaveFileTask(string? filter, string? defaultExt, string? content) {
+
+			SaveFileDialog dialog = new() {
+
+				AddExtension = true,
+				Filter = filter,
+				DefaultExt = defaultExt,
+
+			};
+
+			if(dialog.ShowDialog() == DialogResult.OK) {
+
+				File.WriteAllText(dialog.FileName, content);
+
+				return dialog.FileName;
+
+			}
+
+			return null;
 
 		}
 

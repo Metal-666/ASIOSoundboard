@@ -51,7 +51,8 @@ namespace ASIOSoundboard {
 			if(audioManager != null) {
 
 				HostEventsModule hostEventsModule = new("/websockets", audioManager, loggerFactory.CreateLogger<HostEventsModule>());
-				CoreController coreController = new(audioManager, loggerFactory.CreateLogger<CoreController>());
+				CoreController coreController = new(audioManager, hostEventsModule, loggerFactory.CreateLogger<CoreController>());
+				PublicController publicController = new(audioManager, hostEventsModule, loggerFactory.CreateLogger<PublicController>());
 
 				coreController.OnAppReloadRequest += (sender, e) => window?.ReloadApp();
 
@@ -59,7 +60,7 @@ namespace ASIOSoundboard {
 						.WithUrlPrefix("http://localhost:29873/")
 						.WithMode(HttpListenerMode.EmbedIO))
 					.WithModule(hostEventsModule)
-					.WithWebApi("/controller/public", (WebApiModule module) => module.WithController(() => new PublicController(audioManager, hostEventsModule, loggerFactory.CreateLogger<PublicController>())))
+					.WithWebApi("/controller/public", (WebApiModule module) => module.WithController(() => publicController))
 					.WithWebApi("/controller/core", (WebApiModule module) => module.WithController(() => coreController))
 					.WithStaticFolder("/", @"flutter-ui\", true);
 

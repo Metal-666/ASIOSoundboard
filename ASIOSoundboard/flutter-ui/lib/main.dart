@@ -1,11 +1,14 @@
+import 'dart:async';
+
 import 'package:asio_soundboard/bloc/settings/state.dart';
+import 'package:asio_soundboard/data/network/websocket_events.dart';
 import 'package:asio_soundboard/util/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:system_theme/system_theme.dart';
 
 import 'bloc/board/bloc.dart';
-import 'bloc/board/events.dart' as bloc_events;
+import 'bloc/board/events.dart' as board_events;
 import 'bloc/root/bloc.dart';
 import 'bloc/root/events.dart';
 import 'bloc/root/state.dart';
@@ -16,103 +19,129 @@ import 'data/settings/settings_repository.dart';
 import 'views/board.dart';
 import 'views/settings.dart';
 
-// All this fields should probably not be here, but I have no idea where else to put them.
-final ClientRepository _clientRepository = ClientRepository();
-final SettingsRepository _settingsRepository = SettingsRepository();
-
-final RootBloc _rootBloc = RootBloc(_clientRepository, _settingsRepository);
-final BoardBloc _boardBloc = BoardBloc(_clientRepository);
-final SettingsBloc _settingsBloc =
-    SettingsBloc(_clientRepository, _settingsRepository);
-
 final Color originalAccentColor = Colors.deepPurple[500]!;
+
+final Map<Bloc, bool> loadedBlocs = <Bloc, bool>{};
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await SystemTheme.accentInstance.load();
 
-  await _settingsRepository.init();
-  _clientRepository.init();
+  final ClientRepository clientRepository = ClientRepository();
+  final SettingsRepository settingsRepository = SettingsRepository();
 
-  final ThemeData theme = ThemeData.dark();
+  await settingsRepository.init();
 
-  Color? accentColor;
+  final RootBloc rootBloc = RootBloc(clientRepository, settingsRepository);
+  final BoardBloc boardBloc = BoardBloc(clientRepository, settingsRepository);
+  final SettingsBloc settingsBloc =
+      SettingsBloc(clientRepository, settingsRepository);
 
-  switch (SettingsState.accentModeConverter[_settingsRepository.accentMode] ??
-      AccentMode.original) {
-    original:
-    case AccentMode.original:
-      {
-        accentColor = originalAccentColor;
+  loadedBlocs.addAll(<Bloc, bool>{
+    rootBloc: false,
+    boardBloc: false,
+    settingsBloc: false,
+  });
 
-        break;
-      }
-    case AccentMode.system:
-      {
-        accentColor = SystemTheme.accentInstance.accent;
+  StreamSubscription? subscription;
+  subscription = clientRepository.eventStream.stream.listen((event) async {
+    switch (event.type) {
+      case WebsocketMessageType.connectionEstablished:
+        {
+          subscription!.cancel();
 
-        break;
-      }
-    case AccentMode.custom:
-      {
-        String? color = _settingsRepository.customAccentColor;
+          final ThemeData theme = ThemeData.dark();
 
-        if (color != null) {
-          accentColor = HexColor.fromHex(color);
+          Color? accentColor;
+
+          switch (SettingsState
+                  .accentModeConverter[settingsRepository.accentMode] ??
+              AccentMode.original) {
+            original:
+            case AccentMode.original:
+              {
+                accentColor = originalAccentColor;
+
+                break;
+              }
+            case AccentMode.system:
+              {
+                accentColor = SystemTheme.accentInstance.accent;
+
+                break;
+              }
+            case AccentMode.custom:
+              {
+                String? color = settingsRepository.customAccentColor;
+
+                if (color != null) {
+                  accentColor = HexColor.fromHex(color);
+
+                  break;
+                }
+
+                continue original;
+              }
+          }
+
+          await clientRepository
+              .setGlobalVolume(settingsRepository.globalVolume);
+
+          if (settingsRepository.autoStartEngine) {
+            await clientRepository.startAudioEngine(
+              settingsRepository.audioDevice,
+              settingsRepository.sampleRate,
+              settingsRepository.globalVolume,
+            );
+          }
+
+          runApp(
+            MaterialApp(
+              title: 'ASIOSoundboard',
+              theme: theme.copyWith(
+                colorScheme: theme.colorScheme.copyWith(
+                  primary: accentColor,
+                  secondary: Colors.white,
+                  onPrimary: accentColor.computeLuminance() > 0.5
+                      ? Colors.black
+                      : Colors.white,
+                  onSecondary: Colors.black,
+                ),
+                toggleableActiveColor: accentColor,
+              ),
+              home: MultiRepositoryProvider(
+                providers: [
+                  RepositoryProvider(
+                    create: (_) => clientRepository,
+                  ),
+                  RepositoryProvider(
+                    create: (_) => settingsRepository,
+                  ),
+                ],
+                child: BlocProvider<RootBloc>.value(
+                  value: rootBloc..add(AppLoaded()),
+                  child: Root(boardBloc, settingsBloc),
+                ),
+              ),
+            ),
+          );
 
           break;
         }
+      default:
+    }
+  });
 
-        continue original;
-      }
-  }
-
-  await _clientRepository.setGlobalVolume(_settingsRepository.globalVolume);
-
-  if (_settingsRepository.autoStartEngine) {
-    await _clientRepository.startAudioEngine(
-      _settingsRepository.audioDevice,
-      _settingsRepository.sampleRate,
-      _settingsRepository.globalVolume,
-    );
-  }
-
-  runApp(
-    MaterialApp(
-      title: 'ASIOSoundboard',
-      theme: theme.copyWith(
-        colorScheme: theme.colorScheme.copyWith(
-          primary: accentColor,
-          secondary: Colors.white,
-          onPrimary: accentColor.computeLuminance() > 0.5
-              ? Colors.black
-              : Colors.white,
-          onSecondary: Colors.black,
-        ),
-        toggleableActiveColor: accentColor,
-      ),
-      home: MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider(
-            create: (_) => _clientRepository,
-          ),
-          RepositoryProvider(
-            create: (_) => _settingsRepository,
-          ),
-        ],
-        child: BlocProvider<RootBloc>.value(
-          value: _rootBloc..add(AppLoaded()),
-          child: Root(),
-        ),
-      ),
-    ),
-  );
+  clientRepository.initWebsockets();
 }
 
 class Root extends StatelessWidget {
   final PageController pageController = PageController();
 
-  Root({Key? key}) : super(key: key);
+  final BoardBloc boardBloc;
+  final SettingsBloc settingsBloc;
+
+  Root(this.boardBloc, this.settingsBloc, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -223,11 +252,11 @@ class Root extends StatelessWidget {
           controller: pageController,
           children: <Widget>[
             BlocProvider<BoardBloc>.value(
-              value: _boardBloc..add(bloc_events.PageLoaded()),
+              value: boardBloc..add(board_events.PageLoaded()),
               child: BoardView(),
             ),
             BlocProvider<SettingsBloc>.value(
-              value: _settingsBloc..add(settings_events.PageLoaded()),
+              value: settingsBloc..add(settings_events.PageLoaded()),
               child: SettingsView(),
             ),
           ],

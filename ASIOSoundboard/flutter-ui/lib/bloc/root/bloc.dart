@@ -24,15 +24,12 @@ class RootBloc extends Bloc<RootEvent, RootState> {
           false,
           tileSize: _settingsRepository.tileSize,
         )) {
-    //_clientRepository.restoreTileSize();
-
     // Start listening to the host events. We are mainly interested in global changes like stopping and starting the Audio Engine, and also errors and other notifications.
     _subscription = _clientRepository.eventStream.stream
         .listen((WebsocketMessage message) => add(WebsocketEvent(message)));
 
-    on<AppLoaded>((event, emit) async {
-      /**/
-    });
+    on<AppLoaded>(
+        (event, emit) async => _clientRepository.notifyBlocLoaded(this));
     on<WebsocketEvent>((event, emit) {
       switch (event.message.type) {
         case WebsocketMessageType.audioEngineStatus:

@@ -73,6 +73,17 @@ class SettingsRepository {
       preferences.setString(_Settings.customAccentColor, customAccentColor);
     }
   }
+
+  String? get defaultSoundboard =>
+      preferences.getString(_Settings.defaultSoundboard);
+
+  set defaultSoundboard(String? defaultSoundboard) {
+    if (defaultSoundboard == null) {
+      preferences.remove(_Settings.defaultSoundboard);
+    } else {
+      preferences.setString(_Settings.defaultSoundboard, defaultSoundboard);
+    }
+  }
 }
 
 class _Settings {
@@ -82,5 +93,6 @@ class _Settings {
       tileSize = 'tileSize',
       autoStartEngine = 'autoStartEngine',
       accentMode = 'accentMode',
-      customAccentColor = 'customAccentColor';
+      customAccentColor = 'customAccentColor',
+      defaultSoundboard = 'defaultSoundboard';
 }

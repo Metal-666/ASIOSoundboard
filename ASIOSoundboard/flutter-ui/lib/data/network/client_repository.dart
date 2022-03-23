@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:asio_soundboard/bloc/root/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart';
 
+import '../../main.dart';
 import 'http_events.dart';
 import 'websocket_events.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -17,8 +20,8 @@ class ClientRepository {
   final StreamController<WebsocketMessage> eventStream =
       StreamController<WebsocketMessage>.broadcast();
 
-  void init() {
-    log('Attempting to connect to the server');
+  void initWebsockets() {
+    log('Attempting to connect to the websocket server');
 
     if (_channel == null || _channel?.closeCode != null) {
       try {
@@ -49,6 +52,14 @@ class ClientRepository {
     }
   }
 
+  void notifyBlocLoaded(Bloc bloc) {
+    loadedBlocs[bloc] = true;
+
+    if (!loadedBlocs.values.contains(false)) {
+      _sendWebsocketMessage(WebsocketMessageType.appLoaded);
+    }
+  }
+
   Future<List<String>?> listAudioDevices() {
     log('Retrieving audio devices...');
 
@@ -67,7 +78,7 @@ class ClientRepository {
     log('Picking file...');
 
     return _makeCoreGetRequest(CoreGetRequest.pickFile)
-        .then((value) => value['file'] as String);
+        .then((value) => value?['file'] as String);
   }
 
   Future<String?> loadFile(String? filter) {
@@ -78,7 +89,18 @@ class ClientRepository {
       <String, String?>{
         'filter': filter,
       },
-    ).then((value) => value['content'] as String?);
+    ).then((value) => value?['content'] as String?);
+  }
+
+  Future<String?> readFile(String? path) {
+    log('Reading file ($path)...');
+
+    return _makeCoreGetRequest(
+      CoreGetRequest.readFile,
+      <String, String?>{
+        'path': path,
+      },
+    ).then((value) => value?['content'] as String?);
   }
 
   Future<bool?> fileExists(String? path) {
@@ -89,7 +111,7 @@ class ClientRepository {
       <String, String?>{
         'path': path,
       },
-    ).then((value) => value['exists'] as bool);
+    ).then((value) => value?['exists'] as bool?);
   }
 
   Future<void> setGlobalVolume(double glbablVolume) {
@@ -137,7 +159,7 @@ class ClientRepository {
     return _makeCorePostRequest(CorePostRequest.reload);
   }
 
-  Future<void> saveFile(String filter, String defaultExt, String content) {
+  Future<String?> saveFile(String filter, String defaultExt, String content) {
     log('Saving a file...');
 
     return _makeCorePostRequest(
@@ -147,7 +169,7 @@ class ClientRepository {
         'default_ext': defaultExt,
         'content': content
       },
-    );
+    ).then((value) => value['path'] as String?);
   }
 
   Future<void> playFile(String file, double? volume) {
@@ -168,59 +190,127 @@ class ClientRepository {
     return _makePublicPostRequest(PublicPostRequest.stop);
   }
 
-  void _sendWebsocketMessage(WebsocketMessageType type,
-      {WebsocketMessageData? data}) {
+  void _sendWebsocketMessage(
+    WebsocketMessageType type, {
+    WebsocketMessageData? data,
+  }) {
     if (_channel?.closeCode == null) {
       final String eventType = websocketEventsConverter.inverse[type] ??
           websocketEventsConverter.inverse[WebsocketMessageType.unknown]!;
       final String? jsonData = data?.toJson();
 
-      _channel?.sink.add(jsonEncode({'event': eventType, 'data': jsonData}));
+      _channel?.sink.add(jsonEncode({
+        'event': eventType,
+        'data': jsonData,
+      }));
       log('Sent a message: "$eventType", data: $jsonData');
     } else {
       log('Failed to send a message - client is null or not connected');
     }
   }
 
-  Future<dynamic> _makeCoreGetRequest(CoreGetRequest request,
-      [Map<String, dynamic>? queryParameters]) async {
-    final Response response = await _client.get(Uri.http(
+  Future<dynamic> _makeCoreGetRequest(
+    CoreGetRequest request, [
+    Map<String, dynamic>? queryParameters,
+  ]) async {
+    final Response response = await _makeGetRequest(
+      Uri.http(
         'localhost:29873',
         '/controller/core/' +
             (coreGetRequestConverter.inverse[request] ??
                 coreGetRequestConverter.inverse[CoreGetRequest.unknown]!),
-        queryParameters));
-    if (response.statusCode == 200) {
-      final String body = response.body;
+        queryParameters,
+      ),
+    );
 
-      log('Received a response: $body');
+    final String body = response.body;
 
+    log('Received a response: $body');
+
+    if (response.statusCode == 200 && body.isNotEmpty) {
       return jsonDecode(body);
-    }
-    log('Host responded with an error!');
+    } else {
+      log('Host responded with an error!');
 
-    return null;
+      return null;
+    }
   }
 
-  Future<void> _makeCorePostRequest(CorePostRequest request,
-          [Map<String, String>? body]) async =>
-      _client.post(
-          Uri.http(
-              'localhost:29873',
-              '/controller/core/' +
-                  (corePostRequestConverter.inverse[request] ??
-                      corePostRequestConverter
-                          .inverse[CorePostRequest.unknown]!)),
-          body: body);
+  Future<dynamic> _makeCorePostRequest(
+    CorePostRequest request, [
+    Map<String, String>? body,
+  ]) async {
+    final Response response = await _makePostRequest(
+      Uri.http(
+        'localhost:29873',
+        '/controller/core/' +
+            (corePostRequestConverter.inverse[request] ??
+                corePostRequestConverter.inverse[CorePostRequest.unknown]!),
+      ),
+      body: body,
+    );
 
-  Future<void> _makePublicPostRequest(PublicPostRequest request,
-          [Map<String, String>? body]) async =>
-      _client.post(
-          Uri.http(
-              'localhost:29873',
-              '/controller/public/' +
-                  (publicPostRequestConverter.inverse[request] ??
-                      publicPostRequestConverter
-                          .inverse[PublicPostRequest.unknown]!)),
-          body: body);
+    final String responseBody = response.body;
+
+    log('Received a response: $body');
+
+    if (response.statusCode == 200) {
+      if (responseBody.isNotEmpty) {
+        return jsonDecode(responseBody);
+      }
+
+      return null;
+    } else {
+      log('Host responded with an error!');
+
+      return null;
+    }
+  }
+
+  Future<dynamic> _makePublicPostRequest(
+    PublicPostRequest request, [
+    Map<String, String>? body,
+  ]) async {
+    final Response response = await _makePostRequest(
+      Uri.http(
+        'localhost:29873',
+        '/controller/public/' +
+            (publicPostRequestConverter.inverse[request] ??
+                publicPostRequestConverter.inverse[PublicPostRequest.unknown]!),
+      ),
+      body: body,
+    );
+
+    final String responseBody = response.body;
+
+    log('Received a response: $body');
+
+    if (response.statusCode == 200) {
+      if (responseBody.isNotEmpty) {
+        return jsonDecode(responseBody);
+      }
+
+      return null;
+    } else {
+      log('Host responded with an error!');
+
+      return null;
+    }
+  }
+
+  Future<Response> _makeGetRequest(Uri uri) {
+    return _client.get(uri).then((value) {
+      log('Made a GET request to $uri');
+
+      return value;
+    });
+  }
+
+  Future<Response> _makePostRequest(Uri uri, {Object? body}) {
+    return _client.post(uri, body: body).then((value) {
+      log('Made a POST request to $uri');
+
+      return value;
+    });
+  }
 }

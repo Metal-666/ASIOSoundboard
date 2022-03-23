@@ -12,17 +12,21 @@ class WebsocketMessage {
 
 enum WebsocketMessageType {
   unknown,
+  connectionEstablished,
+  appLoaded,
   audioEngineStatus,
   error,
   fileError,
   fileResampleNeeded,
-  requestSoundByName
+  requestSoundByName,
 }
 
 final BiMap<String, WebsocketMessageType> websocketEventsConverter =
     BiMap<String, WebsocketMessageType>()
       ..addAll(<String, WebsocketMessageType>{
         'unknown': WebsocketMessageType.unknown,
+        'connection_established': WebsocketMessageType.connectionEstablished,
+        'app_loaded': WebsocketMessageType.appLoaded,
         'audio_engine_status': WebsocketMessageType.audioEngineStatus,
         'error': WebsocketMessageType.error,
         'file_error': WebsocketMessageType.fileError,

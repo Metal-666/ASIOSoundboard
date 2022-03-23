@@ -46,13 +46,13 @@ namespace ASIOSoundboard.Web.Modules {
 
 		}
 
-		private void AudioEngineStatusHandler(object? sender, AudioEngineStatusEventArgs args) {
+		public void AudioEngineStatusHandler(object? sender, AudioEngineStatusEventArgs args) {
 
 			SendMessage("audio_engine_status", args);
 
 		}
 
-		private void ErrorHandler(object? sender, ErrorEventArgs args) {
+		public void ErrorHandler(object? sender, ErrorEventArgs args) {
 
 			SendMessage("error", new Dictionary<string, dynamic>() {
 
@@ -62,7 +62,7 @@ namespace ASIOSoundboard.Web.Modules {
 
 		}
 
-		private void FileErrorHandler(object? sender, FileErrorEventArgs args) {
+		public void FileErrorHandler(object? sender, FileErrorEventArgs args) {
 
 			SendMessage("file_error", new Dictionary<string, dynamic>() {
 
@@ -72,7 +72,7 @@ namespace ASIOSoundboard.Web.Modules {
 
 		}
 
-		private void FileResampleHandler(object? sender, FileResampleEventArgs args) {
+		public void FileResampleHandler(object? sender, FileResampleEventArgs args) {
 
 			SendMessage("file_resample_needed", new Dictionary<string, dynamic>() {
 
@@ -86,7 +86,7 @@ namespace ASIOSoundboard.Web.Modules {
 
 			logger.LogInformation("New client is connecting...");
 
-			audioManager.AudioEngineStatus();
+			SendMessage("connection_established");
 
 			return base.OnClientConnectedAsync(context);
 
@@ -111,7 +111,19 @@ namespace ASIOSoundboard.Web.Modules {
 
 				//Depending on the event type, do different stuff
 				//The purpose of each command should be pretty self-explanatory from it's name.
-				switch(message["event"].GetString()) { }
+				switch(message["event"].GetString()) {
+
+					case "app_loaded": {
+
+						SendMessage("app_loaded");
+
+						audioManager.AudioEngineStatus();
+
+						break;
+
+					}
+
+				}
 
 			}
 

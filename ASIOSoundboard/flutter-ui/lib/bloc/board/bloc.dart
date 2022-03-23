@@ -2,30 +2,44 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../data/network/client_repository.dart';
 import '../../data/network/websocket_events.dart';
+import '../../data/settings/settings_repository.dart';
 import '../../data/soundboard/soundboard.dart';
 import 'events.dart';
 import 'state.dart';
 
 class BoardBloc extends Bloc<BoardEvent, BoardState> {
   final ClientRepository _clientRepository;
+  final SettingsRepository _settingsRepository;
+
   late final StreamSubscription<WebsocketMessage> _subscription;
 
-  final Uuid uuid = const Uuid();
-
-  BoardBloc(this._clientRepository) : super(const BoardState(null, null)) {
+  BoardBloc(this._clientRepository, this._settingsRepository)
+      : super(const BoardState(null, null)) {
     // Start listening to the host events. We are mainly insterested in events related to soundboard state, for example creation or deletion of a Tile.
     _subscription = _clientRepository.eventStream.stream
         .listen((WebsocketMessage message) => add(WebsocketEvent(message)));
 
-    on<PageLoaded>((event, emit) {
-      /**/
-    });
-    on<WebsocketEvent>((event, emit) {
+    on<PageLoaded>(
+        (event, emit) async => _clientRepository.notifyBlocLoaded(this));
+    on<WebsocketEvent>((event, emit) async {
       switch (event.message.type) {
+        case WebsocketMessageType.appLoaded:
+          {
+            if (_settingsRepository.defaultSoundboard != null) {
+              String? content = await _clientRepository
+                  .readFile(_settingsRepository.defaultSoundboard);
+
+              if (content != null) {
+                emit(state.copyWith(
+                    soundboard: () => Soundboard.fromJson(content)));
+              }
+            }
+
+            break;
+          }
         case WebsocketMessageType.requestSoundByName:
           {
             if (state.soundboard != null) {
@@ -135,8 +149,12 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       if (state.soundboard != null) {
         log('Saving soundboard...');
 
-        await _clientRepository.saveFile(
+        String? path = await _clientRepository.saveFile(
             'Json File (*.json)|*.json', 'json', state.soundboard!.toJson());
+
+        if (path != null) {
+          _settingsRepository.defaultSoundboard = path;
+        }
       } else {
         log('Can\'t save soundboard - it\'s null');
       }

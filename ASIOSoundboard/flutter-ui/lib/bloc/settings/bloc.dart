@@ -34,20 +34,26 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     _subscription = _clientRepository.eventStream.stream
         .listen((WebsocketMessage message) => add(WebsocketEvent(message)));
 
-    on<PageLoaded>((event, emit) async {
-      final List<String>? audioDevices =
-          await _clientRepository.listAudioDevices();
-      final List<int>? sampleRates = await _clientRepository.listSampleRates();
-
-      emit(state.copyWith(
-        asioDevices: () => audioDevices,
-        sampleRates: () => sampleRates,
-        asioDevice: () => _settingsRepository.audioDevice,
-        sampleRate: () => _settingsRepository.sampleRate,
-      ));
-    });
-    on<WebsocketEvent>((event, emit) {
+    on<PageLoaded>(
+        (event, emit) async => _clientRepository.notifyBlocLoaded(this));
+    on<WebsocketEvent>((event, emit) async {
       switch (event.message.type) {
+        case WebsocketMessageType.appLoaded:
+          {
+            final List<String>? audioDevices =
+                await _clientRepository.listAudioDevices();
+            final List<int>? sampleRates =
+                await _clientRepository.listSampleRates();
+
+            emit(state.copyWith(
+              asioDevices: () => audioDevices,
+              sampleRates: () => sampleRates,
+              asioDevice: () => _settingsRepository.audioDevice,
+              sampleRate: () => _settingsRepository.sampleRate,
+            ));
+
+            break;
+          }
         default:
       }
     });
