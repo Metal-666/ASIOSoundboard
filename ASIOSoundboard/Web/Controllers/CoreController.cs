@@ -41,7 +41,7 @@ namespace ASIOSoundboard.Web.Controllers {
 		#region Verb: GET
 
 		[Route(HttpVerbs.Get, "/audio-devices")]
-		public async Task AudioDevices() {
+		public Dictionary<string, string[]> AudioDevices() {
 
 			logger.LogInformation("Listing audio devices");
 
@@ -49,77 +49,77 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			logger.LogInformation("Fetched list: {}, sending...", asioDevices);
 
-			await HttpContext.SendDataAsync(new Dictionary<string, string[]>{
+			return new Dictionary<string, string[]>{
 
 				{ "devices", asioDevices }
 
-			});
+			};
 			
 		}
 
 		[Route(HttpVerbs.Get, "/sample-rates")]
-		public async Task SampleRates() {
+		public Dictionary<string, int[]> SampleRates() {
 
 			logger.LogInformation("Listing sample rates");
 
-			await HttpContext.SendDataAsync(new Dictionary<string, int[]>{
+			return new Dictionary<string, int[]>{
 
 				{ "rates", new int[] { 44100, 48000, 88200, 96000, 176400, 192000 } }
 
-			});
+			};
 
 		}
 
 		[Route(HttpVerbs.Get, "/pick-file")]
-		public async Task PickFile() {
+		public async Task<Dictionary<string, string>> PickFile() {
 
 			logger.LogInformation("Picking a file");
 
 			string? file = await System.Windows.Application.Current.Dispatcher.Invoke(PickFileTask);
 
-			await HttpContext.SendDataAsync(new Dictionary<string, string>() {
+			return new Dictionary<string, string>() {
 			
 				{ "file", file ?? "" }
 				
-			});
+			};
 
 		}
 
 		[Route(HttpVerbs.Get, "/load-file")]
-		public async Task LoadFile() {
+		public async Task<Dictionary<string, string?>> LoadFile() {
 
 			logger.LogInformation("Loading a file");
 
 			NameValueCollection query = HttpContext.GetRequestQueryData();
 
 			string? content = await System.Windows.Application.Current.Dispatcher.Invoke(() => LoadFileTask(query.Get("filter")));
-			
-			await HttpContext.SendDataAsync(new Dictionary<string, string?>() {
+
+			return new Dictionary<string, string?>() {
 			
 				{ "content", content }
 			
-			});
+			};
 
 		}
 
 		[Route(HttpVerbs.Get, "/read-file")]
-		public async Task ReadFile() {
-
-			logger.LogInformation("Loading a file");
+		public Dictionary<string, string?> ReadFile() {
 
 			string? path = HttpContext.GetRequestQueryData().Get("path");
 
-			string? content = null;
+			logger.LogInformation("Loading a file ({})", path);
+
+			string? content;
 
 			if(!string.IsNullOrWhiteSpace(path) && File.Exists(path)) {
 
 				content = File.ReadAllText(path);
 
-				await HttpContext.SendDataAsync(new Dictionary<string, string?>() {
+				return new Dictionary<string, string?>() {
 
 					{ "content", content }
 
-				});
+				};
 
 			}
 
@@ -133,14 +133,14 @@ namespace ASIOSoundboard.Web.Controllers {
 
 				});
 
-				HttpContext.Response.StatusCode = 500;
+				throw HttpException.NotFound();
 
 			}
 
 		}
 
 		[Route(HttpVerbs.Get, "/file-exists")]
-		public async Task FileExists() {
+		public async Task<Dictionary<string, bool>> FileExists() {
 
 			logger.LogInformation("Checking if file exists");
 
@@ -148,11 +148,11 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			bool exists = await System.Windows.Application.Current.Dispatcher.Invoke(() => FileExistsTask(query.Get("path")));
 
-			await HttpContext.SendDataAsync(new Dictionary<string, bool>() {
+			return new Dictionary<string, bool>() {
 
 				{ "exists", exists }
 
-			});
+			};
 
 		}
 
@@ -208,7 +208,7 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Post, "/save-file")]
-		public async Task SaveFile() {
+		public async Task<Dictionary<string, string?>> SaveFile() {
 
 			logger.LogInformation("Saving a file");
 
@@ -216,11 +216,11 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			string? path = await System.Windows.Application.Current.Dispatcher.Invoke(() => SaveFileTask(form.Get("filter"), form.Get("default_ext"), form.Get("content")));
 
-			await HttpContext.SendDataAsync(new Dictionary<string, string?>{
+			return new Dictionary<string, string?>{
 
 				{ "path", path }
 
-			});
+			};
 
 		}
 

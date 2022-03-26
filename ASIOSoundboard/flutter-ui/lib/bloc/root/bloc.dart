@@ -30,8 +30,23 @@ class RootBloc extends Bloc<RootEvent, RootState> {
 
     on<AppLoaded>(
         (event, emit) async => _clientRepository.notifyBlocLoaded(this));
-    on<WebsocketEvent>((event, emit) {
+    on<WebsocketEvent>((event, emit) async {
       switch (event.message.type) {
+        case WebsocketMessageType.appLoaded:
+          {
+            await _clientRepository
+                .setGlobalVolume(_settingsRepository.globalVolume);
+
+            if (_settingsRepository.autoStartEngine) {
+              await _clientRepository.startAudioEngine(
+                _settingsRepository.audioDevice,
+                _settingsRepository.sampleRate,
+                _settingsRepository.globalVolume,
+              );
+            }
+
+            break;
+          }
         case WebsocketMessageType.audioEngineStatus:
           {
             bool? active = event.message.data?.active;

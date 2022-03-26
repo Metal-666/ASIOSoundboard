@@ -84,17 +84,6 @@ void main() async {
               }
           }
 
-          await clientRepository
-              .setGlobalVolume(settingsRepository.globalVolume);
-
-          if (settingsRepository.autoStartEngine) {
-            await clientRepository.startAudioEngine(
-              settingsRepository.audioDevice,
-              settingsRepository.sampleRate,
-              settingsRepository.globalVolume,
-            );
-          }
-
           runApp(
             MaterialApp(
               title: 'ASIOSoundboard',

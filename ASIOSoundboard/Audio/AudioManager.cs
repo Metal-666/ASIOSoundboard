@@ -367,7 +367,7 @@ namespace ASIOSoundboard.Audio {
 		public class FileErrorEventArgs : ErrorEventArgs {
 
 			public const string FILE_NOT_FOUND = "FILE NOT FOUND",
-								CANT_READ_FILE = "CAN\'t READ FILE";
+								CANT_READ_FILE = "CAN\'T READ FILE";
 
 			[JsonPropertyName("file")]
 			public string? File { get; set; }
