@@ -10,4 +10,8 @@
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
   </PropertyGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /Y &quot;$(ProjectDir)ahk\ASIOSoundboard.ahk&quot; &quot;$(TargetDir)&quot;" />
+  </Target>
+
 </Project>
