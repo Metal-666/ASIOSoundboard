@@ -46,7 +46,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
               for (Tile tile in state.soundboard!.tiles.where((element) =>
                   element.filePath != null &&
                   element.name == event.message.data?.name)) {
-                _clientRepository.playFile(tile.filePath!, tile.volume);
+                _clientRepository.playFile(
+                  tile.filePath!,
+                  tile.volume,
+                );
               }
             }
             break;
@@ -57,14 +60,14 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     on<PlayTile>((event, emit) async {
       if (event.tile.filePath != null) {
         await _clientRepository.playFile(
-            event.tile.filePath!, event.tile.volume);
+          event.tile.filePath!,
+          event.tile.volume,
+        );
       }
     });
-    on<AddNewTile>((event, emit) => emit(
-          state.copyWith(
-            dialog: () => const NewTileDialog(null, null),
-          ),
-        ));
+    on<AddNewTile>((event, emit) => emit(state.copyWith(
+          dialog: () => const TileDialog(null, null),
+        )));
     on<PickTilePath>((event, emit) async {
       String? path = await _clientRepository.pickFilePath();
 
@@ -75,9 +78,9 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
         ),
       ));
     });
-    on<NewTileDialogClosed>(
+    on<TileDialogClosed>(
         (event, emit) => emit(state.copyWith(dialog: () => null)));
-    on<NewTileDialogSubmitted>((event, emit) async {
+    on<TileDialogSubmitted>((event, emit) async {
       String? nameError, pathError;
 
       if (state.dialog?.tileName == null) {
@@ -104,28 +107,39 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
           state.dialog!.tileName,
           state.dialog?.tileVolume ?? 1,
         );
-
-        if (state.soundboard == null) {
-          emit(state.copyWith(
-            soundboard: () => Soundboard(<Tile>[tile]),
-            dialog: () => null,
-          ));
+        if (state.dialog?.editedTile == null) {
+          if (state.soundboard == null) {
+            emit(state.copyWith(
+              soundboard: () => Soundboard(<Tile>[tile]),
+              dialog: () => null,
+            ));
+          } else {
+            emit(state.copyWith(
+              dialog: () => null,
+              soundboard: () => state.soundboard?.copyWith(
+                tiles: () => List.of(state.soundboard!.tiles)..add(tile),
+              ),
+            ));
+          }
         } else {
           emit(state.copyWith(
             dialog: () => null,
             soundboard: () => state.soundboard?.copyWith(
-              tiles: () =>
-                  List.of(state.soundboard?.tiles ?? const <Tile>[])..add(tile),
-            ),
+                tiles: () => List.of(state.soundboard!.tiles)
+                  ..insert(
+                      state.soundboard!.tiles
+                          .indexOf(state.dialog!.editedTile!),
+                      tile)
+                  ..remove(state.dialog?.editedTile)),
           ));
         }
       }
     });
-    on<NewTileNameChanged>((event, emit) => emit(state.copyWith(
+    on<TileDialogNameChanged>((event, emit) => emit(state.copyWith(
         dialog: () => state.dialog?.copyWith(tileName: () => event.name))));
-    on<NewTilePathChanged>((event, emit) => emit(state.copyWith(
+    on<TileDialogPathChanged>((event, emit) => emit(state.copyWith(
         dialog: () => state.dialog?.copyWith(tilePath: () => event.path))));
-    on<NewTileVolumeChanged>((event, emit) => emit(state.copyWith(
+    on<TileDialogVolumeChanged>((event, emit) => emit(state.copyWith(
         dialog: () => state.dialog?.copyWith(tileVolume: () => event.volume))));
     on<StopAllSound>((event, emit) => _clientRepository.stopAllSounds());
     on<TileRightClick>((event, emit) {
@@ -139,18 +153,25 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
         soundboard: () => state.soundboard?.copyWith(
             tiles: () =>
                 List.of(state.soundboard!.tiles)..remove(event.tile)))));
-    on<EncodeAHKHandle>((event, emit) {
-      //String handle = Uri.encodeComponent(event.id ?? '');
-      //Clipboard.setData(ClipboardData(text: handle));
-
-      //emit(state.copyWith(encodedAHKHandle: () => handle));
-    });
+    on<EditTile>((event, emit) => emit(state.copyWith(
+          dialog: () => TileDialog(
+            event.tile.name,
+            event.tile.filePath,
+            tileVolume: event.tile.volume ?? 1,
+            shouldOverwriteName: true,
+            shouldOverwritePath: true,
+            editedTile: event.tile,
+          ),
+        )));
     on<SaveSoundboard>((event, emit) async {
       if (state.soundboard != null) {
         log('Saving soundboard...');
 
         String? path = await _clientRepository.saveFile(
-            'Json File (*.json)|*.json', 'json', state.soundboard!.toJson());
+          'Json File (*.json)|*.json',
+          'json',
+          state.soundboard!.toJson(),
+        );
 
         if (path != null) {
           _settingsRepository.defaultSoundboard = path;

@@ -25,26 +25,26 @@ class AddNewTile extends BoardEvent {}
 
 class PickTilePath extends BoardEvent {}
 
-class NewTileDialogClosed extends BoardEvent {}
+class TileDialogClosed extends BoardEvent {}
 
-class NewTileDialogSubmitted extends BoardEvent {}
+class TileDialogSubmitted extends BoardEvent {}
 
-class NewTileNameChanged extends BoardEvent {
+class TileDialogNameChanged extends BoardEvent {
   final String? name;
 
-  NewTileNameChanged(this.name);
+  TileDialogNameChanged(this.name);
 }
 
-class NewTilePathChanged extends BoardEvent {
+class TileDialogPathChanged extends BoardEvent {
   final String? path;
 
-  NewTilePathChanged(this.path);
+  TileDialogPathChanged(this.path);
 }
 
-class NewTileVolumeChanged extends BoardEvent {
+class TileDialogVolumeChanged extends BoardEvent {
   final double volume;
 
-  NewTileVolumeChanged(this.volume);
+  TileDialogVolumeChanged(this.volume);
 }
 
 class StopAllSound extends BoardEvent {}
@@ -57,8 +57,8 @@ class DeleteTile extends TileEvent {
   DeleteTile(Tile tile) : super(tile);
 }
 
-class EncodeAHKHandle extends TileEvent {
-  EncodeAHKHandle(Tile tile) : super(tile);
+class EditTile extends TileEvent {
+  EditTile(Tile tile) : super(tile);
 }
 
 class SaveSoundboard extends BoardEvent {}

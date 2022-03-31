@@ -123,14 +123,17 @@ class ClientRepository {
   }
 
   Future<void> startAudioEngine(
-      String? audioDevice, int? sampleRate, double? globalVolume) {
+    String? audioDevice,
+    int? sampleRate,
+    double? globalVolume,
+  ) {
     log('Starting Audio Engine with AudioDevice=$audioDevice, SampleRate=$sampleRate and GlobalVolume=$globalVolume');
 
     return _makeCorePostRequest(
         CorePostRequest.startAudioEngine, <String, String>{
       'device': audioDevice.toString(),
       'rate': sampleRate.toString(),
-      'volume': globalVolume.toString()
+      'volume': globalVolume.toString(),
     });
   }
 
@@ -166,7 +169,7 @@ class ClientRepository {
       <String, String>{
         'filter': filter,
         'default_ext': defaultExt,
-        'content': content
+        'content': content,
       },
     ).then((value) => value['path'] as String?);
   }

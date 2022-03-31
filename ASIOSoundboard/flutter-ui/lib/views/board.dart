@@ -5,11 +5,11 @@ import '../bloc/board/events.dart';
 import '../data/soundboard/soundboard.dart';
 
 import '../bloc/board/bloc.dart';
-import '../bloc/board/state.dart' hide NewTileDialog;
+import '../bloc/board/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'dialogs/new_tile_dialog.dart';
+import 'dialogs/tile_dialog.dart';
 
 /// A body panel that displays a soundboard.
 class BoardView extends StatelessWidget {
@@ -103,7 +103,11 @@ class BoardView extends StatelessWidget {
                   (index) => _tile(
                     context,
                     state.soundboard?.tiles[index] ??
-                        const Tile('null', 'new_tile', 1),
+                        const Tile(
+                          'null',
+                          'new_tile',
+                          1,
+                        ),
                   ),
                 ),
               );
@@ -115,10 +119,11 @@ class BoardView extends StatelessWidget {
   /// Builds a tile that can be placed inisde the grid.
   Widget _tile(BuildContext context, Tile tile) {
     /// A general button to be placed on the back side of the tile.
-    Widget _backButton(
-            {required String text,
-            required VoidCallback onPressed,
-            required IconData iconData}) =>
+    Widget _backButton({
+      required String text,
+      required VoidCallback onPressed,
+      required IconData iconData,
+    }) =>
         Expanded(
           child: TextButton.icon(
             onPressed: onPressed,
@@ -162,11 +167,10 @@ class BoardView extends StatelessWidget {
                       ),
                       _backDivider(),
                       _backButton(
-                        text: 'Copy AHK Handle',
-                        onPressed: () => context
-                            .read<BoardBloc>()
-                            .add(EncodeAHKHandle(tile)),
-                        iconData: Icons.code,
+                        text: 'Edit',
+                        onPressed: () =>
+                            context.read<BoardBloc>().add(EditTile(tile)),
+                        iconData: Icons.edit,
                       ),
                     ],
                   ),
@@ -178,8 +182,10 @@ class BoardView extends StatelessWidget {
 
   /// A panel that can be seen on the right of the board. Has buttons that control the state of the soundboard.
   Widget _sidePanel(BuildContext context) {
-    Widget _sideButton(
-            {required String text, required VoidCallback onPressed}) =>
+    Widget _sideButton({
+      required String text,
+      required VoidCallback onPressed,
+    }) =>
         SizedBox(
           height: 35,
           child: ElevatedButton(

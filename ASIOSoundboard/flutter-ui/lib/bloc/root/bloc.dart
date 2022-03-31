@@ -120,7 +120,10 @@ class RootBloc extends Bloc<RootEvent, RootState> {
       if (event.file != null && event.sampleRate != null) {
         log('Resampling file (${event.file} => ${event.sampleRate})');
 
-        await _clientRepository.resampleFile(event.file!, event.sampleRate!);
+        await _clientRepository.resampleFile(
+          event.file!,
+          event.sampleRate!,
+        );
       } else {
         log('Can\'t resample file - path or sample rate is null');
       }

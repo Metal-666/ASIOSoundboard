@@ -46,7 +46,11 @@ class WebsocketMessageData {
 
   String? name;
 
-  WebsocketMessageData({this.active, this.error, this.name});
+  WebsocketMessageData({
+    this.active,
+    this.error,
+    this.name,
+  });
 
   WebsocketMessageData.audioEngineStatus(this.active);
   WebsocketMessageData.error(this.error);

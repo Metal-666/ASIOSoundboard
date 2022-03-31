@@ -2,60 +2,83 @@ import '../../data/soundboard/soundboard.dart';
 
 class BoardState {
   final Soundboard? soundboard;
-  final NewTileDialog? dialog;
+  final TileDialog? dialog;
 
   final Tile? rightClickedTile;
 
   final String? encodedAHKHandle;
 
-  const BoardState(this.soundboard, this.dialog,
-      {this.rightClickedTile, this.encodedAHKHandle});
+  const BoardState(
+    this.soundboard,
+    this.dialog, {
+    this.rightClickedTile,
+    this.encodedAHKHandle,
+  });
 
-  BoardState copyWith(
-          {Soundboard? Function()? soundboard,
-          NewTileDialog? Function()? dialog,
-          Tile? Function()? rightClickedTile,
-          String? Function()? encodedAHKHandle}) =>
-      BoardState(soundboard == null ? this.soundboard : soundboard.call(),
-          dialog == null ? this.dialog : dialog.call(),
-          rightClickedTile: rightClickedTile == null
-              ? this.rightClickedTile
-              : rightClickedTile.call(),
-          encodedAHKHandle: encodedAHKHandle == null
-              ? this.encodedAHKHandle
-              : encodedAHKHandle.call());
+  BoardState copyWith({
+    Soundboard? Function()? soundboard,
+    TileDialog? Function()? dialog,
+    Tile? Function()? rightClickedTile,
+    String? Function()? encodedAHKHandle,
+  }) =>
+      BoardState(
+        soundboard == null ? this.soundboard : soundboard.call(),
+        dialog == null ? this.dialog : dialog.call(),
+        rightClickedTile: rightClickedTile == null
+            ? this.rightClickedTile
+            : rightClickedTile.call(),
+        encodedAHKHandle: encodedAHKHandle == null
+            ? this.encodedAHKHandle
+            : encodedAHKHandle.call(),
+      );
 }
 
-class NewTileDialog {
+class TileDialog {
   final String? tileName;
   final String? tileNameError;
   final String? tilePath;
   final String? tilePathError;
 
-  final bool shouldOverwritePath;
-
   final double tileVolume;
 
-  const NewTileDialog(this.tileName, this.tilePath,
-      {this.tileNameError,
-      this.tilePathError,
-      this.shouldOverwritePath = false,
-      this.tileVolume = 1.0});
+  final bool shouldOverwriteName;
+  final bool shouldOverwritePath;
 
-  NewTileDialog copyWith(
-          {String? Function()? tileName,
-          String? Function()? tileNameError,
-          String? Function()? tilePath,
-          String? Function()? tilePathError,
-          bool Function()? shouldOverwritePath,
-          double Function()? tileVolume}) =>
-      NewTileDialog(tileName == null ? this.tileName : tileName.call(),
-          tilePath == null ? this.tilePath : tilePath.call(),
-          tileNameError:
-              tileNameError == null ? this.tileNameError : tileNameError.call(),
-          tilePathError:
-              tilePathError == null ? this.tilePathError : tilePathError.call(),
-          shouldOverwritePath:
-              shouldOverwritePath == null ? false : shouldOverwritePath.call(),
-          tileVolume: tileVolume == null ? this.tileVolume : tileVolume.call());
+  final Tile? editedTile;
+
+  const TileDialog(
+    this.tileName,
+    this.tilePath, {
+    this.tileNameError,
+    this.tilePathError,
+    this.tileVolume = 1.0,
+    this.shouldOverwriteName = false,
+    this.shouldOverwritePath = false,
+    this.editedTile,
+  });
+
+  TileDialog copyWith({
+    String? Function()? tileName,
+    String? Function()? tileNameError,
+    String? Function()? tilePath,
+    String? Function()? tilePathError,
+    double Function()? tileVolume,
+    bool Function()? shouldOverwriteName,
+    bool Function()? shouldOverwritePath,
+    Tile Function()? editedTile,
+  }) =>
+      TileDialog(
+        tileName == null ? this.tileName : tileName.call(),
+        tilePath == null ? this.tilePath : tilePath.call(),
+        tileNameError:
+            tileNameError == null ? this.tileNameError : tileNameError.call(),
+        tilePathError:
+            tilePathError == null ? this.tilePathError : tilePathError.call(),
+        tileVolume: tileVolume == null ? this.tileVolume : tileVolume.call(),
+        shouldOverwriteName:
+            shouldOverwriteName == null ? false : shouldOverwriteName.call(),
+        shouldOverwritePath:
+            shouldOverwritePath == null ? false : shouldOverwritePath.call(),
+        editedTile: editedTile == null ? this.editedTile : editedTile.call(),
+      );
 }

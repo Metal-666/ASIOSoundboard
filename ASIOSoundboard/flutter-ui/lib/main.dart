@@ -130,7 +130,11 @@ class Root extends StatelessWidget {
   final BoardBloc boardBloc;
   final SettingsBloc settingsBloc;
 
-  Root(this.boardBloc, this.settingsBloc, {Key? key}) : super(key: key);
+  Root(
+    this.boardBloc,
+    this.settingsBloc, {
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -152,7 +156,9 @@ class Root extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(5), bottomRight: Radius.circular(5)),
+            bottomLeft: Radius.circular(5),
+            bottomRight: Radius.circular(5),
+          ),
           boxShadow: const <BoxShadow>[
             BoxShadow(
               offset: Offset(0, 2),
@@ -233,9 +239,11 @@ class Root extends StatelessWidget {
                 () => context.read<RootBloc>().add(ErrorDialogDismissed()));
           }
 
-          pageController.animateToPage(state.viewIndex,
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.easeOutQuint);
+          pageController.animateToPage(
+            state.viewIndex,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutQuint,
+          );
         },
         child: PageView(
           controller: pageController,

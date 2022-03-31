@@ -2,10 +2,9 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <Configurations>Debug;Release;Debug (No UI)</Configurations>
     <IsPublishable>False</IsPublishable>
@@ -21,7 +20,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /E /Y &quot;$(ProjectDir)flutter-ui\build\web&quot; &quot;$(TargetDir)flutter-ui\&quot;&#xD;&#xA;xcopy /Y &quot;$(SolutionDir)ASIOSoundboard.AHK\bin\Release\net6.0-windows&quot; &quot;$(TargetDir)ahk\&quot;" />
+    <Exec Command="xcopy /E /Y &quot;$(ProjectDir)flutter-ui\build\web&quot; &quot;$(TargetDir)flutter-ui\&quot;&#xD;&#xA;xcopy /E /Y &quot;$(SolutionDir)ahk&quot; &quot;$(TargetDir)ahk\&quot;" />
   </Target>
 
 </Project>

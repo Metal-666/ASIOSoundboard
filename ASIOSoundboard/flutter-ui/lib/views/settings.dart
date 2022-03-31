@@ -107,7 +107,10 @@ class SettingsView extends StatelessWidget {
       );
 
   /// Builds a basic card for a settings category. Makes [header] the title of the card and puts [content] underneath.
-  Widget _settingsCard({required String header, required Widget content}) =>
+  Widget _settingsCard({
+    required String header,
+    required Widget content,
+  }) =>
       Padding(
         padding: const EdgeInsets.all(8),
         child: ConstrainedBox(
@@ -241,32 +244,23 @@ class SettingsView extends StatelessWidget {
       builder: (context, state) => Column(
             children: <Widget>[
               const Text('Accent Color'),
-              RadioListTile<AccentMode>(
-                title: const Text('Original'),
-                value: AccentMode.original,
-                groupValue: state.accentMode,
-                onChanged: (value) =>
-                    context.read<SettingsBloc>().add(AccentModeChanged(value)),
-              ),
-              RadioListTile<AccentMode>(
-                title: const Text('System'),
-                value: AccentMode.system,
-                groupValue: state.accentMode,
-                onChanged: (value) =>
-                    context.read<SettingsBloc>().add(AccentModeChanged(value)),
-              ),
-              RadioListTile<AccentMode>(
-                title: const Text('Custom'),
-                value: AccentMode.custom,
-                groupValue: state.accentMode,
-                onChanged: (value) =>
-                    context.read<SettingsBloc>().add(AccentModeChanged(value)),
-                secondary: IconButton(
-                  icon: const Icon(Icons.color_lens),
-                  onPressed: () =>
-                      context.read<SettingsBloc>().add(PickCustomAccentColor()),
-                ),
-              ),
+              ...AccentMode.values.map<RadioListTile<AccentMode>>(
+                  (mode) => RadioListTile<AccentMode>(
+                        title: Text(mode.toString()),
+                        value: mode,
+                        groupValue: state.accentMode,
+                        onChanged: (value) => context
+                            .read<SettingsBloc>()
+                            .add(AccentModeChanged(value)),
+                        secondary: mode == AccentMode.custom
+                            ? IconButton(
+                                icon: const Icon(Icons.color_lens),
+                                onPressed: () => context
+                                    .read<SettingsBloc>()
+                                    .add(PickCustomAccentColor()),
+                              )
+                            : null,
+                      )),
             ],
           ));
 }

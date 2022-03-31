@@ -5,21 +5,27 @@ class RootState {
 
   final double tileSize;
 
-  const RootState(this.viewIndex, this.errorDialog, this.isAudioEngineRunning,
-      {this.tileSize = 1});
+  const RootState(
+    this.viewIndex,
+    this.errorDialog,
+    this.isAudioEngineRunning, {
+    this.tileSize = 1,
+  });
 
-  RootState copyWith(
-          {int Function()? viewIndex,
-          ErrorDialog? Function()? errorDialog,
-          bool Function()? isAudioEngineRunning,
-          double Function()? tileSize}) =>
+  RootState copyWith({
+    int Function()? viewIndex,
+    ErrorDialog? Function()? errorDialog,
+    bool Function()? isAudioEngineRunning,
+    double Function()? tileSize,
+  }) =>
       RootState(
-          viewIndex == null ? this.viewIndex : viewIndex.call(),
-          errorDialog?.call(),
-          isAudioEngineRunning == null
-              ? this.isAudioEngineRunning
-              : isAudioEngineRunning.call(),
-          tileSize: tileSize == null ? this.tileSize : tileSize.call());
+        viewIndex == null ? this.viewIndex : viewIndex.call(),
+        errorDialog?.call(),
+        isAudioEngineRunning == null
+            ? this.isAudioEngineRunning
+            : isAudioEngineRunning.call(),
+        tileSize: tileSize == null ? this.tileSize : tileSize.call(),
+      );
 }
 
 class ErrorDialog {

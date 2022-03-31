@@ -15,7 +15,8 @@ class NewTileDialog extends StatefulWidget {
 
 // I'm not a fan of using stateful widgets in a bloc app, but there is no other way - TextEditingController needs to be disposed
 class _NewTileDialogState extends State<NewTileDialog> {
-  final TextEditingController pathController = TextEditingController();
+  final TextEditingController nameController = TextEditingController(),
+      pathController = TextEditingController();
 
   @override
   Widget build(BuildContext context) => AlertDialog(
@@ -28,13 +29,12 @@ class _NewTileDialogState extends State<NewTileDialog> {
         actions: <Widget>[
           TextButton(
             child: const Text('Cancel'),
-            onPressed: () =>
-                context.read<BoardBloc>().add(NewTileDialogClosed()),
+            onPressed: () => context.read<BoardBloc>().add(TileDialogClosed()),
           ),
           ElevatedButton(
-            child: const Text('Add'),
+            child: const Text('Done'),
             onPressed: () =>
-                context.read<BoardBloc>().add(NewTileDialogSubmitted()),
+                context.read<BoardBloc>().add(TileDialogSubmitted()),
           )
         ],
       );
@@ -51,9 +51,17 @@ class _NewTileDialogState extends State<NewTileDialog> {
 
     return BlocBuilder<BoardBloc, BoardState>(
       builder: (context, state) {
+        if (state.dialog?.shouldOverwriteName ?? false) {
+          _overwriteControllerText(
+            nameController,
+            state.dialog!.tileName ?? '',
+          );
+        }
         if (state.dialog?.shouldOverwritePath ?? false) {
           _overwriteControllerText(
-              pathController, state.dialog!.tilePath ?? '');
+            pathController,
+            state.dialog!.tilePath ?? '',
+          );
         }
 
         return Column(
@@ -62,15 +70,18 @@ class _NewTileDialogState extends State<NewTileDialog> {
             _sectionHeader('Tile Name'),
             TextFormField(
               decoration: const InputDecoration(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 5,
+                  vertical: 10,
+                ),
                 isDense: true,
                 hintText: 'Bruh',
               ),
               autovalidateMode: AutovalidateMode.always,
+              controller: nameController,
               validator: (_) => state.dialog?.tileNameError,
               onChanged: (value) =>
-                  context.read<BoardBloc>().add(NewTileNameChanged(value)),
+                  context.read<BoardBloc>().add(TileDialogNameChanged(value)),
             ),
             _sectionHeader('Tile Sound Path'),
             Row(
@@ -85,7 +96,7 @@ class _NewTileDialogState extends State<NewTileDialog> {
                     validator: (_) => state.dialog?.tilePathError,
                     onChanged: (value) => context
                         .read<BoardBloc>()
-                        .add(NewTilePathChanged(value)),
+                        .add(TileDialogPathChanged(value)),
                   ),
                 ),
                 ElevatedButton(
@@ -104,7 +115,7 @@ class _NewTileDialogState extends State<NewTileDialog> {
                   '${((state.dialog?.tileVolume ?? 1) * 100).toInt()}%')(),
               value: state.dialog?.tileVolume ?? 1,
               onChanged: (double value) =>
-                  context.read<BoardBloc>().add(NewTileVolumeChanged(value)),
+                  context.read<BoardBloc>().add(TileDialogVolumeChanged(value)),
             )
           ],
         );
@@ -123,6 +134,7 @@ class _NewTileDialogState extends State<NewTileDialog> {
 
   @override
   void dispose() {
+    nameController.dispose();
     pathController.dispose();
 
     super.dispose();

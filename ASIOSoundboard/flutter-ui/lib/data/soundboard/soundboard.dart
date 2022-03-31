@@ -32,23 +32,35 @@ class Tile {
 
   final double? volume;
 
-  const Tile(this.filePath, this.name, this.volume);
+  const Tile(
+    this.filePath,
+    this.name,
+    this.volume,
+  );
 
-  Tile copyWith(
-          {String? Function()? filePath,
-          String? Function()? name,
-          String? Function()? id,
-          double? Function()? volume}) =>
+  Tile copyWith({
+    String? Function()? filePath,
+    String? Function()? name,
+    String? Function()? id,
+    double? Function()? volume,
+  }) =>
       Tile(
-          filePath == null ? this.filePath : filePath.call(),
-          name == null ? this.name : name.call(),
-          volume == null ? this.volume : volume.call());
+        filePath == null ? this.filePath : filePath.call(),
+        name == null ? this.name : name.call(),
+        volume == null ? this.volume : volume.call(),
+      );
 
-  Map<String, dynamic> toMap() =>
-      {'file_path': filePath, 'name': name, 'volume': volume};
+  Map<String, dynamic> toMap() => {
+        'file_path': filePath,
+        'name': name,
+        'volume': volume,
+      };
 
-  factory Tile.fromMap(Map<String, dynamic> map) =>
-      Tile(map['file_path'], map['name'], map['volume']);
+  factory Tile.fromMap(Map<String, dynamic> map) => Tile(
+        map['file_path'],
+        map['name'],
+        map['volume'],
+      );
 
   String toJson() => json.encode(toMap());
 

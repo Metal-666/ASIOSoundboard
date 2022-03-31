@@ -18,8 +18,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
   late final StreamSubscription<WebsocketMessage> _subscription;
 
-  SettingsBloc(this._clientRepository, this._settingsRepository)
-      : super(SettingsState(
+  SettingsBloc(
+    this._clientRepository,
+    this._settingsRepository,
+  ) : super(SettingsState(
           null,
           <int>[],
           null,
