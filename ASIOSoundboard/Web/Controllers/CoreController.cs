@@ -6,7 +6,6 @@ using EmbedIO.WebApi;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -86,13 +85,11 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Get, "/load-file")]
-		public async Task<Dictionary<string, string?>> LoadFile() {
+		public async Task<Dictionary<string, string?>> LoadFile([QueryField] string filter) {
 
 			logger.LogInformation("Loading a file");
 
-			NameValueCollection query = HttpContext.GetRequestQueryData();
-
-			string? content = await System.Windows.Application.Current.Dispatcher.Invoke(() => LoadFileTask(query.Get("filter")));
+			string? content = await System.Windows.Application.Current.Dispatcher.Invoke(() => LoadFileTask(filter));
 
 			return new Dictionary<string, string?>() {
 			
@@ -103,9 +100,7 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Get, "/read-file")]
-		public Dictionary<string, string?> ReadFile() {
-
-			string? path = HttpContext.GetRequestQueryData().Get("path");
+		public Dictionary<string, string?> ReadFile([QueryField] string path) {
 
 			logger.LogInformation("Loading a file ({})", path);
 
@@ -125,11 +120,11 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			else {
 
-				hostEventsModule.FileErrorHandler(this, new AudioManager.FileErrorEventArgs() {
+				hostEventsModule.ErrorHandler(this, new AudioManager.FileLoadErrorEventArgs() {
 
-					Error = AudioManager.FileErrorEventArgs.CANT_READ_FILE,
-					Description = "File path is empty or file doesn't exist",
-					File = path
+					Subject = AudioManager.FileErrorEventArgs.FILE,
+					Error = AudioManager.FileLoadErrorEventArgs.File.NOT_FOUND,
+					Path = path
 
 				});
 
@@ -140,13 +135,11 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Get, "/file-exists")]
-		public async Task<Dictionary<string, bool>> FileExists() {
+		public async Task<Dictionary<string, bool>> FileExists([QueryField] string path) {
 
 			logger.LogInformation("Checking if file exists");
 
-			NameValueCollection query = HttpContext.GetRequestQueryData();
-
-			bool exists = await System.Windows.Application.Current.Dispatcher.Invoke(() => FileExistsTask(query.Get("path")));
+			bool exists = await System.Windows.Application.Current.Dispatcher.Invoke(() => FileExistsTask(path));
 
 			return new Dictionary<string, bool>() {
 
@@ -161,29 +154,11 @@ namespace ASIOSoundboard.Web.Controllers {
 		#region Verb: POST
 
 		[Route(HttpVerbs.Post, "/start-audio-engine")]
-		public async void StartAudioEngine() {
+		public void StartAudioEngine([FormField] string device, [FormField] int rate = 48000, [FormField] float volume = 1) {
 
-			NameValueCollection form = await HttpContext.GetRequestFormDataAsync();
+			logger.LogInformation("Starting Audio Engine with AudioEngine={}, SampleRate={}, GlobalVolume={}", device, rate, volume);
 
-			string? audioDevice = form.Get("device");
-			int? sampleRate = null;
-			float? globalVolume = null;
-
-			if(int.TryParse(form.Get("rate"), out int rate)) {
-
-				sampleRate = rate;
-
-			}
-
-			if(float.TryParse(form.Get("volume"), out float volume)) {
-
-				globalVolume = volume;
-
-			}
-
-			logger.LogInformation("Starting Audio Engine with AudioEngine={}, SampleRate={}, GlobalVolume={}", audioDevice, sampleRate, globalVolume);
-
-			audioManager.StartAudioEngine(audioDevice, sampleRate, globalVolume);
+			audioManager.StartAudioEngine(device, rate, volume);
 
 		}
 
@@ -197,24 +172,20 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Post, "/global-volume")]
-		public async void GlobalVolume() {
+		public void GlobalVolume([FormField] float volume = 1) {
 
-			float globalVolume = float.Parse((await HttpContext.GetRequestFormDataAsync()).Get("volume") ?? "1");
+			logger.LogInformation("Setting Global Volume to {}", volume);
 
-			logger.LogInformation("Setting Global Volume to {}", globalVolume);
-
-			audioManager.SetGlobalVolume(globalVolume);
+			audioManager.SetGlobalVolume(volume);
 
 		}
 
 		[Route(HttpVerbs.Post, "/save-file")]
-		public async Task<Dictionary<string, string?>> SaveFile() {
+		public async Task<Dictionary<string, string?>> SaveFile([FormField] string filter, [FormField] string ext, [FormField] string content) {
 
 			logger.LogInformation("Saving a file");
 
-			NameValueCollection form = await HttpContext.GetRequestFormDataAsync();
-
-			string? path = await System.Windows.Application.Current.Dispatcher.Invoke(() => SaveFileTask(form.Get("filter"), form.Get("default_ext"), form.Get("content")));
+			string? path = await System.Windows.Application.Current.Dispatcher.Invoke(() => SaveFileTask(filter, ext, content));
 
 			return new Dictionary<string, string?>{
 
@@ -225,13 +196,21 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Post, "/resample-file")]
-		public async void ResampleFile() {
+		public void ResampleFile([FormField] string file, [FormField] int rate) {
 
 			logger.LogInformation("Resampling a file");
 
-			NameValueCollection form = await HttpContext.GetRequestFormDataAsync();
+			if(file != null) {
 
-			audioManager.ResampleFile(form.Get("file"), int.Parse(form.Get("rate") ?? "48000"));
+				audioManager.ResampleFile(file, rate);
+
+			}
+
+			else {
+
+				logger.LogInformation("Can't resample file: one of parameters is null (file: {}, rate: {})", file, rate);
+
+			}
 
 		}
 
@@ -291,13 +270,13 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		}
 
-		private async Task<string?> SaveFileTask(string? filter, string? defaultExt, string? content) {
+		private async Task<string?> SaveFileTask(string? filter, string? ext, string? content) {
 
 			SaveFileDialog dialog = new() {
 
 				AddExtension = true,
 				Filter = filter,
-				DefaultExt = defaultExt,
+				DefaultExt = ext,
 
 			};
 

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:flutter/services.dart';
+
 import '../../data/settings/settings_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -58,44 +60,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
           }
         case WebsocketMessageType.error:
           {
-            Error? error = event.message.data?.error;
-
-            if (error != null) {
-              emit(state.copyWith(
-                  errorDialog: () => ErrorDialog(
-                        error: error.error,
-                        description: error.description,
-                      )));
-            }
-            break;
-          }
-        case WebsocketMessageType.fileError:
-          {
-            Error? error = event.message.data?.error;
-
-            if (error != null) {
-              emit(state.copyWith(
-                  errorDialog: () => FileErrorDialog(
-                        error: error.error,
-                        description: error.description,
-                        file: error.file,
-                      )));
-            }
-            break;
-          }
-        case WebsocketMessageType.fileResampleNeeded:
-          {
-            Error? error = event.message.data?.error;
-
-            if (error != null) {
-              emit(state.copyWith(
-                  errorDialog: () => ResampleNeededDialog(
-                        error: error.error,
-                        description: error.description,
-                        file: error.file,
-                        sampleRate: error.sampleRate,
-                      )));
-            }
+            emit(state.copyWith(error: () => event.message.data?.error));
             break;
           }
         default:
@@ -103,8 +68,6 @@ class RootBloc extends Bloc<RootEvent, RootState> {
     });
     on<ViewChanged>((event, emit) =>
         emit(state.copyWith(viewIndex: () => event.viewIndex)));
-    on<ErrorDialogDismissed>(
-        (event, emit) => emit(state.copyWith(errorDialog: () => null)));
     on<AudioEngineToggled>((event, emit) async {
       if (state.isAudioEngineRunning) {
         await _clientRepository.stopAudioEngine();
@@ -116,13 +79,15 @@ class RootBloc extends Bloc<RootEvent, RootState> {
         );
       }
     });
+    on<CopyErrorStackTrace>((event, emit) =>
+        Clipboard.setData(ClipboardData(text: state.error?.description)));
     on<FileResampleRequested>((event, emit) async {
-      if (event.file != null && event.sampleRate != null) {
-        log('Resampling file (${event.file} => ${event.sampleRate})');
+      if (state.error?.path != null && state.error?.sampleRate != null) {
+        log('Resampling file (${state.error?.path} => ${state.error?.sampleRate})');
 
         await _clientRepository.resampleFile(
-          event.file!,
-          event.sampleRate!,
+          state.error!.path!,
+          state.error!.sampleRate!,
         );
       } else {
         log('Can\'t resample file - path or sample rate is null');

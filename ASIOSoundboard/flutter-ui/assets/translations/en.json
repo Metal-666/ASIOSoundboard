@@ -1,0 +1,154 @@
+{
+	"root": {
+		"engine_status": {
+			"status": "Audio Engine Status: ",
+			"running": "RUNNING",
+			"stopped": "STOPPED",
+			"start": "START",
+			"stop": "STOP"
+		},
+		"nav": {
+			"board": "Board",
+			"settings": "Settings"
+		},
+		"error_dialog": {
+			"internal_error": "Internal error!",
+			"resample": "Resample",
+			"copy_stack_trace": "Copy Stack Trace"
+		}
+	},
+	"board": {
+		"side_panel": {
+			"save": "Save",
+			"load": "Load",
+			"stop_all_sounds": "Stop All Sounds",
+			"russian_warship": {
+				"part_1": "Russian warship",
+				"part_2": "go fuck yourself!"
+			}
+		},
+		"grid": {
+			"tile": {
+				"delete": "Delete",
+				"edit": "Edit"
+			}
+		},
+		"tile_dialog": {
+			"title": {
+				"new_tile": "Add New Tile",
+				"edit_tile": "Edit Tile"
+			},
+			"name": {
+				"header": "Tile Name",
+				"placeholder": "Bruh",
+				"errors": {
+					"empty": "Name can't be empty"
+				}
+			},
+			"path": {
+				"header": "Tile Sound Path",
+				"placeholder": "D:\\Sounds\bruh.wav",
+				"browse": "Browse",
+				"errors": {
+					"empty": "Path can't be empty",
+					"not_found": "File doesn't exist"
+				}
+			},
+			"volume": {
+				"header": "Tile Volume"
+			},
+			"actions": {
+				"cancel": "Cancel",
+				"done": "Done"
+			}
+		}
+	},
+	"settings": {
+		"audio": {
+			"header": "Audio",
+			"asio_device": "ASIO Device",
+			"sample_rate": "Sample Rate",
+			"global_volume": "Global Volume",
+			"autostart": "Start Engine when app launches?"
+		},
+		"board": {
+			"header": "Board",
+			"tile_size": "Tile Size",
+			"tile_sizes": {
+				"tiny": "Tiny",
+				"small": "Small",
+				"medium": "Medium",
+				"big": "Big",
+				"huge": "Huge"
+			}
+		},
+		"ui": {
+			"header": "UI",
+			"accent_color": "Accent Color",
+			"accent_colors": {
+				"original": "Original",
+				"system": "System",
+				"custom": "Custom"
+			},
+			"accent_color_picker": {
+				"title": "Pick custom accent color",
+				"shade": "Select color shade",
+				"actions": {
+					"cancel": "Cancel",
+					"done": "Done"
+				}
+			},
+			"language": "Language",
+			"languages": {
+				"en": "English",
+				"uk": "Українська"
+			}
+		}
+	},
+	"errors": {
+		"audio_engine": {
+			"error": "CAN'T START AUDIO ENGINE",
+			"subjects": {
+				"general": {
+					"already_running": "Audio Engine is already running"
+				},
+				"audio_device": {
+					"not_set": "Audio Device not set",
+					"not_found": "Selected Audio Device can't be found"
+				},
+				"sample_rate": {
+					"not_set": "Sample Rate not set",
+					"not_supported": "Selected Sample Rate is unsupported by {device}"
+				}
+			}
+		},
+		"playback": {
+			"error": "PLAYBACK ERROR",
+			"subjects": {
+				"file": {
+					"not_found": "Make sure the requested file is present on your device",
+					"unsupported_sample_rate": "This file uses unsupported sample rate. Do you want to fix it? (Original file won't be changed)"
+				},
+				"audio_engine": {
+					"stopped": "You need to start the Audio Engine before playing audio files"
+				}
+			}
+		},
+		"resampling": {
+			"error": "RESAMPLING ERROR",
+			"subjects": {
+				"file": {
+					"not_found": "Make sure the requested file is present on your device"
+				}
+			}
+		},
+		"file_load": {
+			"error": "FILE LOAD ERROR",
+			"subjects": {
+				"file": {
+					"not_found": "Make sure the requested file is present on your device"
+				}
+			}
+		}
+	}
+}

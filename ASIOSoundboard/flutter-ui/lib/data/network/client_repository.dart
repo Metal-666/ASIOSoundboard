@@ -52,10 +52,12 @@ class ClientRepository {
   }
 
   void notifyBlocLoaded(Bloc bloc) {
-    loadedBlocs[bloc] = true;
+    if (!(loadedBlocs[bloc] ?? false)) {
+      loadedBlocs[bloc] = true;
 
-    if (!loadedBlocs.values.contains(false)) {
-      _sendWebsocketMessage(WebsocketMessageType.appLoaded);
+      if (!loadedBlocs.values.contains(false)) {
+        _sendWebsocketMessage(WebsocketMessageType.appLoaded);
+      }
     }
   }
 
@@ -168,7 +170,7 @@ class ClientRepository {
       CorePostRequest.saveFile,
       <String, String>{
         'filter': filter,
-        'default_ext': defaultExt,
+        'ext': defaultExt,
         'content': content,
       },
     ).then((value) => value['path'] as String?);

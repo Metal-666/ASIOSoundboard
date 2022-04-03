@@ -41,20 +41,16 @@ namespace ASIOSoundboard.Web.Controllers {
 		/// </summary>
 		/// <param name="selector">The name of the Tile.</param>
 		[Route(HttpVerbs.Post, "/play")]
-		public async void Play() {
+		public void Play([FormField] string file, [FormField] float volume) {
 
-			NameValueCollection form = await HttpContext.GetRequestFormDataAsync();
+			logger.LogInformation("Playing file ({})", file);
 
-			logger.LogInformation("Playing file ({})", form.Get("file"));
-
-			audioManager.PlayFile(form.Get("file"), float.Parse(form.Get("volume") ?? "1"));
+			audioManager.PlayFile(file, volume);
 
 		}
 
 		[Route(HttpVerbs.Post, "/request-play")]
-		public async void RequestPlay() {
-
-			string? name = (await HttpContext.GetRequestFormDataAsync()).Get("name");
+		public void RequestPlay([FormField] string name) {
 
 			logger.LogInformation("Requested file playback ({})", name);
 

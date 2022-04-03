@@ -19,8 +19,6 @@ namespace ASIOSoundboard.Audio {
 
 		public event EventHandler<AudioEngineStatusEventArgs>? OnAudioEngineStatus;
 		public event EventHandler<ErrorEventArgs>? OnError;
-		public event EventHandler<FileErrorEventArgs>? OnFileError;
-		public event EventHandler<FileResampleEventArgs>? OnFileResampleNeeded;
 
 		private AsioOut? asioOut;
 		private MixingSampleProvider? mixingSampleProvider;
@@ -38,10 +36,10 @@ namespace ASIOSoundboard.Audio {
 
 			if(asioOut != null) {
 
-				OnError?.Invoke(this, new ErrorEventArgs() {
+				OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
 
-					Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
-					Description = "Audio Engine is already running"
+					Subject = AudioEngineErrorEventArgs.GENERAL,
+					Error = AudioEngineErrorEventArgs.General.ALREADY_RUNNING
 
 				});
 			
@@ -49,10 +47,10 @@ namespace ASIOSoundboard.Audio {
 
 			else if(audioDevice == null) {
 
-				OnError?.Invoke(this, new ErrorEventArgs() {
+				OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
 
-					Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
-					Description = "Audio Device not set"
+					Subject = AudioEngineErrorEventArgs.AUDIO_DEVICE,
+					Error = AudioEngineErrorEventArgs.AudioDevice.NOT_SET
 
 				});
 
@@ -60,10 +58,10 @@ namespace ASIOSoundboard.Audio {
 
 			else if(sampleRate == null) {
 
-				OnError?.Invoke(this, new ErrorEventArgs() {
+				OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
 
-					Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
-					Description = "Sample Rate not set"
+					Subject = AudioEngineErrorEventArgs.SAMPLE_RATE,
+					Error = AudioEngineErrorEventArgs.SampleRate.NOT_SET
 
 				});
 
@@ -103,10 +101,11 @@ namespace ASIOSoundboard.Audio {
 
 						else {
 
-							OnError?.Invoke(this, new ErrorEventArgs() {
+							OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
 
-								Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
-								Description = $"Selected Sample Rate is unsupported by {audioDevice}"
+								Subject = AudioEngineErrorEventArgs.SAMPLE_RATE,
+								Error = AudioEngineErrorEventArgs.SampleRate.NOT_SUPPORTED,
+								Device = audioDevice
 
 							});
 
@@ -118,9 +117,8 @@ namespace ASIOSoundboard.Audio {
 
 					catch(Exception e) {
 
-						OnError?.Invoke(this, new ErrorEventArgs() {
+						OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
 
-							Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
 							Description = e.Message
 
 						});
@@ -135,10 +133,10 @@ namespace ASIOSoundboard.Audio {
 
 			else {
 
-				OnError?.Invoke(this, new ErrorEventArgs() {
+				OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
 
-					Error = ErrorEventArgs.CANT_START_AUDIO_ENGINE,
-					Description = "Selected Audio Device can't be found"
+					Subject = AudioEngineErrorEventArgs.AUDIO_DEVICE,
+					Error = AudioEngineErrorEventArgs.AudioDevice.NOT_FOUND
 
 				});
 
@@ -183,17 +181,17 @@ namespace ASIOSoundboard.Audio {
 
 			if(asioOut != null) {
 
-				AudioFileReader? source = ValidateAudioFile(file, () => OnFileError?.Invoke(this, new FileErrorEventArgs() {
+				AudioFileReader? source = ValidateAudioFile(file, () => OnError?.Invoke(this, new PlaybackErrorEventArgs() {
 
-					Error = FileErrorEventArgs.FILE_NOT_FOUND,
-					Description = "Make sure the requested file is present on your device",
-					File = file
+					Subject = PlaybackErrorEventArgs.FILE,
+					Error = PlaybackErrorEventArgs.File.NOT_FOUND,
+					Path = file
 
-				}), (sampleRate) => OnFileResampleNeeded?.Invoke(this, new FileResampleEventArgs() {
+				}), (sampleRate) => OnError?.Invoke(this, new PlaybackErrorEventArgs() {
 
-					Error = "INVALID SAMPLE RATE",
-					Description = "This file uses unsupported sample rate. Do you want to fix it? (Original file won't be changed)",
-					File = file,
+					Subject = PlaybackErrorEventArgs.FILE,
+					Error = PlaybackErrorEventArgs.File.UNSUPPORTED_SAMPLE_RATE,
+					Path = file,
 					SampleRate = sampleRate
 
 				}));
@@ -212,10 +210,10 @@ namespace ASIOSoundboard.Audio {
 
 			else {
 
-				OnError?.Invoke(this, new ErrorEventArgs() {
-
-					Error = "ENGINE IS STOPPED",
-					Description = "You need to start the Audio Engine before playing audio files"
+				OnError?.Invoke(this, new PlaybackErrorEventArgs() {
+					
+					Subject = PlaybackErrorEventArgs.AUDIO_ENGINE,
+					Error = PlaybackErrorEventArgs.AudioEngine.STOPPED
 
 				});
 
@@ -249,11 +247,11 @@ namespace ASIOSoundboard.Audio {
 
 			else {
 
-				OnFileError?.Invoke(this, new FileErrorEventArgs() {
+				OnError?.Invoke(this, new ResamplingErrorEventArgs() {
 
-					Error = FileErrorEventArgs.FILE_NOT_FOUND,
-					Description = "Make sure the requested file is present on your device",
-					File = file
+					Subject = ResamplingErrorEventArgs.FILE,
+					Error = ResamplingErrorEventArgs.File.NOT_FOUND,
+					Path = file
 
 				});
 
@@ -353,32 +351,113 @@ namespace ASIOSoundboard.Audio {
 
 		}
 
-		public class ErrorEventArgs : EventArgs {
+		public abstract class ErrorEventArgs : EventArgs {
 
-			public const string CANT_START_AUDIO_ENGINE = "CAN'T START AUDIO ENGINE";
+			[JsonPropertyName("category")]
+			public string? Category { get; set; }
+
+			[JsonPropertyName("subject")]
+			public string? Subject { get; set; }
 
 			[JsonPropertyName("error")]
-			public string Error { get; set; } = "GENERIC ERROR";
+			public string? Error { get; set; }
+
 			[JsonPropertyName("description")]
 			public string? Description { get; set; }
 
 		}
 
-		public class FileErrorEventArgs : ErrorEventArgs {
+		public abstract class FileErrorEventArgs : ErrorEventArgs {
 
-			public const string FILE_NOT_FOUND = "FILE NOT FOUND",
-								CANT_READ_FILE = "CAN\'T READ FILE";
+			public const string FILE = "file";
 
-			[JsonPropertyName("file")]
-			public string? File { get; set; }
+			public class File {
+
+				public const string NOT_FOUND = "not_found";
+
+			}
+
+			[JsonPropertyName("path")]
+			public string? Path { get; set; }
+
+			public FileErrorEventArgs(string category) {
+			
+				Category = category;
+			
+			}
 
 		}
 
-		public class FileResampleEventArgs : FileErrorEventArgs {
+		public class AudioEngineErrorEventArgs : ErrorEventArgs {
+
+			public const string GENERAL = "general",
+								AUDIO_DEVICE = "audio_device",
+								SAMPLE_RATE = "sample_rate";
+
+			public class General {
+
+				public const string ALREADY_RUNNING = "already_running";
+
+			}
+
+			public class AudioDevice {
+
+				public const string NOT_SET = "not_set",
+									NOT_FOUND = "not_found";
+
+			}
+
+			public class SampleRate {
+
+				public const string NOT_SET = "not_set",
+									NOT_SUPPORTED = "not_supported";
+
+			}
+
+			[JsonPropertyName("device")]
+			public string? Device { get; set; }
+
+			public AudioEngineErrorEventArgs() {
+
+				Category = "audio_engine";
+			
+			}
+
+		}
+
+		public class PlaybackErrorEventArgs : FileErrorEventArgs {
+
+			public const string AUDIO_ENGINE = "audio_engine";
+
+			public class File : FileErrorEventArgs.File {
+
+				public const string UNSUPPORTED_SAMPLE_RATE = "unsupported_sample_rate";
+
+			}
+
+			public class AudioEngine {
+
+				public const string STOPPED = "stopped";
+
+			}
 
 			[JsonPropertyName("sample_rate")]
 			public int SampleRate { get; set; }
-		
+
+			public PlaybackErrorEventArgs() : base("file") {}
+
+		}
+
+		public class ResamplingErrorEventArgs : FileErrorEventArgs {
+
+			public ResamplingErrorEventArgs() : base("resampling") {}
+
+		}
+
+		public class FileLoadErrorEventArgs : FileErrorEventArgs {
+
+			public FileLoadErrorEventArgs() : base("file_load") {}
+
 		}
 
 	}

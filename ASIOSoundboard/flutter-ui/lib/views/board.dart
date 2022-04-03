@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 import '../bloc/root/bloc.dart';
 import '../bloc/root/state.dart';
 
@@ -5,7 +7,7 @@ import '../bloc/board/events.dart';
 import '../data/soundboard/soundboard.dart';
 
 import '../bloc/board/bloc.dart';
-import '../bloc/board/state.dart';
+import '../bloc/board/state.dart' hide TileDialog;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -26,7 +28,7 @@ class BoardView extends StatelessWidget {
               barrierDismissible: false,
               builder: (_) => BlocProvider<BoardBloc>.value(
                 value: context.read<BoardBloc>(),
-                child: const NewTileDialog(),
+                child: const TileDialog(),
               ),
             );
           } else {
@@ -35,32 +37,16 @@ class BoardView extends StatelessWidget {
         },
         listenWhen: (oldState, newState) =>
             (oldState.dialog == null) ^ (newState.dialog == null),
-        builder: (context, state) => BlocListener<BoardBloc, BoardState>(
-          listener: (context, state) {
-            if (state.encodedAHKHandle != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      'Handle "${state.encodedAHKHandle}" copied to Clipboard'),
-                  action: SnackBarAction(
-                    label: 'OK',
-                    onPressed: () {/*Why is this a required argument?*/},
-                  ),
-                ),
-              );
-            }
-          },
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: _mainPanel(),
-              ),
-              SizedBox(
-                width: 150,
-                child: _sidePanel(context),
-              )
-            ],
-          ),
+        builder: (context, state) => Row(
+          children: <Widget>[
+            Expanded(
+              child: _mainPanel(),
+            ),
+            SizedBox(
+              width: 150,
+              child: _sidePanel(context),
+            )
+          ],
         ),
       );
 
@@ -160,14 +146,14 @@ class BoardView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       _backButton(
-                        text: 'Delete',
+                        text: 'board.grid.tile.delete'.tr(),
                         onPressed: () =>
                             context.read<BoardBloc>().add(DeleteTile(tile)),
                         iconData: Icons.close,
                       ),
                       _backDivider(),
                       _backButton(
-                        text: 'Edit',
+                        text: 'board.grid.tile.edit'.tr(),
                         onPressed: () =>
                             context.read<BoardBloc>().add(EditTile(tile)),
                         iconData: Icons.edit,
@@ -213,29 +199,29 @@ class BoardView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _sideButton(
-            text: 'Save',
+            text: 'board.side_panel.save'.tr(),
             onPressed: () => context.read<BoardBloc>().add(SaveSoundboard()),
           ),
           _separator(),
           _sideButton(
-            text: 'Load',
+            text: 'board.side_panel.load'.tr(),
             onPressed: () => context.read<BoardBloc>().add(LoadSoundboard()),
           ),
           const Divider(),
           _sideButton(
-            text: 'Stop All Sounds',
+            text: 'board.side_panel.stop_all_sounds'.tr(),
             onPressed: () => context.read<BoardBloc>().add(StopAllSound()),
           ),
           const Expanded(child: SizedBox.shrink()),
           // Glory to Ukraine :)
-          const Text(
-            'Russian warship',
-            style: TextStyle(color: Colors.blue),
+          Text(
+            'board.side_panel.russian_warship.part_1'.tr(),
+            style: const TextStyle(color: Colors.blue),
             textAlign: TextAlign.center,
           ),
-          const Text(
-            'go fuck yourself',
-            style: TextStyle(color: Colors.yellow),
+          Text(
+            'board.side_panel.russian_warship.part_2'.tr(),
+            style: const TextStyle(color: Colors.yellow),
             textAlign: TextAlign.center,
           ),
           _separator(),

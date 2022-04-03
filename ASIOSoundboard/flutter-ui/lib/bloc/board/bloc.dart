@@ -81,17 +81,19 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     on<TileDialogClosed>(
         (event, emit) => emit(state.copyWith(dialog: () => null)));
     on<TileDialogSubmitted>((event, emit) async {
+      const String errorBase = 'board.tile_dialog.';
+
       String? nameError, pathError;
 
       if (state.dialog?.tileName == null) {
-        nameError = 'Name can\'t be empty';
+        nameError = errorBase + 'name.erorrs.empty';
       }
 
       if (state.dialog?.tilePath == null) {
-        pathError = 'Path can\'t be empty';
+        pathError = errorBase + 'path.errors.empty';
       } else if (!(await _clientRepository.fileExists(state.dialog?.tilePath) ??
           false)) {
-        pathError = 'File doesn\'t exist';
+        pathError = errorBase + 'path.errors.not_found';
       }
 
       if (nameError != null || pathError != null) {

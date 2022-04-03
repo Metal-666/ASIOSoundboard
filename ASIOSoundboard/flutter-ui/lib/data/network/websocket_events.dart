@@ -16,8 +16,6 @@ enum WebsocketMessageType {
   appLoaded,
   audioEngineStatus,
   error,
-  fileError,
-  fileResampleNeeded,
   requestSoundByName,
 }
 
@@ -29,8 +27,6 @@ final BiMap<String, WebsocketMessageType> websocketEventsConverter =
         'app_loaded': WebsocketMessageType.appLoaded,
         'audio_engine_status': WebsocketMessageType.audioEngineStatus,
         'error': WebsocketMessageType.error,
-        'file_error': WebsocketMessageType.fileError,
-        'file_resample_nedeed': WebsocketMessageType.fileResampleNeeded,
         'request_sound_by_name': WebsocketMessageType.requestSoundByName,
       });
 
@@ -42,7 +38,7 @@ final BiMap<String, WebsocketMessageType> websocketEventsConverter =
 class WebsocketMessageData {
   bool? active;
 
-  Error? error;
+  ServerError? error;
 
   String? name;
 
@@ -63,7 +59,7 @@ class WebsocketMessageData {
   factory WebsocketMessageData.fromMap(Map<String, dynamic> map) =>
       WebsocketMessageData(
         active: map['active'],
-        error: map['error'] == null ? null : Error.fromMap(map['error']),
+        error: map['error'] == null ? null : ServerError.fromMap(map['error']),
         name: map['name'],
       );
 
@@ -78,34 +74,47 @@ class WebsocketMessageData {
       WebsocketMessageData.fromMap(json.decode(source));
 }
 
-class Error {
+class ServerError {
+  final String? category;
+  final String? subject;
   final String? error;
   final String? description;
-  final String? file;
+  final String? device;
+  final String? path;
   final int? sampleRate;
 
-  const Error({
+  const ServerError({
+    this.category,
+    this.subject,
     this.error,
     this.description,
-    this.file,
+    this.device,
+    this.path,
     this.sampleRate,
   });
 
   Map<String, dynamic> toMap() => {
+        'category': category,
+        'subject': subject,
         'error': error,
         'description': description,
-        'file': file,
+        'device': device,
+        'path': path,
         'sample_rate': sampleRate,
       };
 
-  factory Error.fromMap(Map<String, dynamic> map) => Error(
+  factory ServerError.fromMap(Map<String, dynamic> map) => ServerError(
+        category: map['category'],
+        subject: map['subject'],
         error: map['error'],
         description: map['description'],
-        file: map['file'],
+        device: map['device'],
+        path: map['path'],
         sampleRate: map['sample_rate']?.toInt(),
       );
 
   String toJson() => json.encode(toMap());
 
-  factory Error.fromJson(String source) => Error.fromMap(json.decode(source));
+  factory ServerError.fromJson(String source) =>
+      ServerError.fromMap(json.decode(source));
 }

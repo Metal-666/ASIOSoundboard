@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:asio_soundboard/bloc/settings/state.dart';
 import 'package:asio_soundboard/data/network/websocket_events.dart';
 import 'package:asio_soundboard/util/extensions.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:system_theme/system_theme.dart';
@@ -24,6 +25,7 @@ final Color originalAccentColor = Colors.deepPurple[500]!;
 final Map<Bloc, bool> loadedBlocs = <Bloc, bool>{};
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
 
   await SystemTheme.accentInstance.load();
 
@@ -52,7 +54,7 @@ void main() async {
 
           final ThemeData theme = ThemeData.dark();
 
-          Color? accentColor;
+          Color accentColor;
 
           switch (SettingsState
                   .accentModeConverter[settingsRepository.accentMode] ??
@@ -85,33 +87,47 @@ void main() async {
           }
 
           runApp(
-            MaterialApp(
-              title: 'ASIOSoundboard',
-              theme: theme.copyWith(
-                colorScheme: theme.colorScheme.copyWith(
-                  primary: accentColor,
-                  secondary: Colors.white,
-                  onPrimary: accentColor.computeLuminance() > 0.5
-                      ? Colors.black
-                      : Colors.white,
-                  onSecondary: Colors.black,
-                ),
-                toggleableActiveColor: accentColor,
-              ),
-              home: MultiRepositoryProvider(
-                providers: [
-                  RepositoryProvider(
-                    create: (_) => clientRepository,
-                  ),
-                  RepositoryProvider(
-                    create: (_) => settingsRepository,
-                  ),
-                ],
-                child: BlocProvider<RootBloc>.value(
-                  value: rootBloc..add(AppLoaded()),
-                  child: Root(boardBloc, settingsBloc),
-                ),
-              ),
+            EasyLocalization(
+              supportedLocales: const <Locale>[
+                Locale('en'),
+                Locale('uk'),
+              ],
+              path: 'assets/translations',
+              fallbackLocale: const Locale('en'),
+              useOnlyLangCode: true,
+              useFallbackTranslations: true,
+              child: Builder(
+                  builder: (context) => MaterialApp(
+                        title: 'ASIOSoundboard',
+                        theme: theme.copyWith(
+                          colorScheme: theme.colorScheme.copyWith(
+                            primary: accentColor,
+                            secondary: Colors.white,
+                            onPrimary: accentColor.computeLuminance() > 0.5
+                                ? Colors.black
+                                : Colors.white,
+                            onSecondary: Colors.black,
+                          ),
+                          toggleableActiveColor: accentColor,
+                        ),
+                        localizationsDelegates: context.localizationDelegates,
+                        supportedLocales: context.supportedLocales,
+                        locale: context.locale,
+                        home: MultiRepositoryProvider(
+                          providers: [
+                            RepositoryProvider(
+                              create: (_) => clientRepository,
+                            ),
+                            RepositoryProvider(
+                              create: (_) => settingsRepository,
+                            ),
+                          ],
+                          child: BlocProvider<RootBloc>.value(
+                            value: rootBloc..add(AppLoaded()),
+                            child: Root(boardBloc, settingsBloc),
+                          ),
+                        ),
+                      )),
             ),
           );
 
@@ -174,11 +190,12 @@ class Root extends StatelessWidget {
               Expanded(
                 child: Text.rich(
                   TextSpan(
-                    text: 'Audio Engine Status: ',
+                    text: 'root.engine_status.status'.tr(),
                     children: <InlineSpan>[
                       TextSpan(
                         text:
-                            state.isAudioEngineRunning ? 'RUNNING' : 'STOPPED',
+                            'root.engine_status.${state.isAudioEngineRunning ? 'running' : 'stopped'}'
+                                .tr(),
                         style: TextStyle(
                           color: state.isAudioEngineRunning
                               ? Colors.green
@@ -192,7 +209,9 @@ class Root extends StatelessWidget {
               ElevatedButton(
                 onPressed: () =>
                     context.read<RootBloc>().add(AudioEngineToggled()),
-                child: Text(state.isAudioEngineRunning ? 'STOP' : 'START'),
+                child: Text(
+                    'root.engine_status.${state.isAudioEngineRunning ? 'stop' : 'start'}'
+                        .tr()),
               )
             ],
           ),
@@ -202,41 +221,53 @@ class Root extends StatelessWidget {
   /// The main panel of the app. Displays a page depending on the current navigation state.
   Widget _body() => BlocListener<RootBloc, RootState>(
         listener: (context, state) {
-          if (state.errorDialog != null) {
-            showModalBottomSheet(
-              context: context,
-              builder: (_) => Padding(
-                padding: const EdgeInsets.all(5),
-                child: Column(
-                  children: <Widget?>[
-                    Text(
-                      state.errorDialog!.error.toString(),
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    Text(
-                      state.errorDialog!.description.toString(),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    () {
-                      if (state.errorDialog is ResampleNeededDialog) {
-                        ResampleNeededDialog dialog =
-                            state.errorDialog as ResampleNeededDialog;
-
-                        return ElevatedButton(
-                          onPressed: () {
-                            context.read<RootBloc>().add(FileResampleRequested(
-                                dialog.file, dialog.sampleRate));
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Resample'),
-                        );
-                      }
-                    }()
-                  ].where((element) => element != null).toList().cast<Widget>(),
-                ),
+          if (state.error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              behavior: SnackBarBehavior.floating,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    'errors.${state.error?.category}.error'.tr(),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                        fontSize: 20),
+                  ),
+                  Text(
+                    state.error?.description == null
+                        ? 'errors.${state.error?.category}.subjects.${state.error?.subject}.${state.error?.error}'
+                            .tr(
+                                namedArgs: <String, String?>{
+                            'device': state.error?.device,
+                            'sampleRate': state.error?.sampleRate?.toString(),
+                            'path': state.error?.path,
+                          }.map<String, String>(
+                                    (key, value) => MapEntry(key, value ?? '')))
+                        : 'root.error_dialog.internal_error'.tr(),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                        fontSize: 18),
+                  ),
+                ],
               ),
-            ).whenComplete(
-                () => context.read<RootBloc>().add(ErrorDialogDismissed()));
+              action: () {
+                if (state.error?.description != null) {
+                  return SnackBarAction(
+                    label: 'root.error_dialog.copy_stack_trace'.tr(),
+                    onPressed: () =>
+                        context.read<RootBloc>().add(CopyErrorStackTrace()),
+                  );
+                } else if (state.error?.path != null &&
+                    state.error?.sampleRate != null) {
+                  return SnackBarAction(
+                    label: 'root.error_dialog.resample'.tr(),
+                    onPressed: () =>
+                        context.read<RootBloc>().add(FileResampleRequested()),
+                  );
+                }
+              }(),
+            ));
           }
 
           pageController.animateToPage(
@@ -274,14 +305,14 @@ class Root extends StatelessWidget {
           ),
           child: BottomNavigationBar(
             backgroundColor: Theme.of(context).cardColor,
-            items: const <BottomNavigationBarItem>[
+            items: <BottomNavigationBarItem>[
               BottomNavigationBarItem(
-                icon: Icon(Icons.grid_on),
-                label: 'Board',
+                icon: const Icon(Icons.grid_on),
+                label: 'root.nav.board'.tr(),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
-                label: 'Settings',
+                icon: const Icon(Icons.settings),
+                label: 'root.nav.settings'.tr(),
               ),
             ],
             onTap: (int index) =>

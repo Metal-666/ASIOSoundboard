@@ -31,8 +31,6 @@ namespace ASIOSoundboard.Web.Modules {
 
 			audioManager.OnAudioEngineStatus += AudioEngineStatusHandler;
 			audioManager.OnError += ErrorHandler;
-			audioManager.OnFileError += FileErrorHandler;
-			audioManager.OnFileResampleNeeded += FileResampleHandler;
 
 		}
 
@@ -55,26 +53,6 @@ namespace ASIOSoundboard.Web.Modules {
 		public void ErrorHandler(object? sender, ErrorEventArgs args) {
 
 			SendMessage("error", new Dictionary<string, dynamic>() {
-
-				{ "error", args }
-
-			});
-
-		}
-
-		public void FileErrorHandler(object? sender, FileErrorEventArgs args) {
-
-			SendMessage("file_error", new Dictionary<string, dynamic>() {
-
-				{ "error", args }
-
-			});
-
-		}
-
-		public void FileResampleHandler(object? sender, FileResampleEventArgs args) {
-
-			SendMessage("file_resample_needed", new Dictionary<string, dynamic>() {
 
 				{ "error", args }
 
@@ -165,8 +143,6 @@ namespace ASIOSoundboard.Web.Modules {
 
 				audioManager.OnAudioEngineStatus -= AudioEngineStatusHandler;
 				audioManager.OnError -= ErrorHandler;
-				audioManager.OnFileError -= FileErrorHandler;
-				audioManager.OnFileResampleNeeded -= FileResampleHandler;
 
 			}
 

@@ -18,14 +18,9 @@ class ViewChanged extends RootEvent {
 
 class AudioEngineToggled extends RootEvent {}
 
-class ErrorDialogDismissed extends RootEvent {}
+class CopyErrorStackTrace extends RootEvent {}
 
-class FileResampleRequested extends RootEvent {
-  final String? file;
-  final int? sampleRate;
-
-  FileResampleRequested(this.file, this.sampleRate);
-}
+class FileResampleRequested extends RootEvent {}
 
 abstract class TileSizeEvent extends RootEvent {
   final double tileSize;

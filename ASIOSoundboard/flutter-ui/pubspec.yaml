@@ -16,13 +16,15 @@ dependencies:
   shared_preferences:
   system_theme:
   flex_color_picker:
+  easy_localization:
 
 dev_dependencies:
   flutter_lints:
 
 flutter:
   uses-material-design: true
-
+  assets:
+    - assets/translations/
 flutter_native_splash:
   color: "#333333"
   image: assets/splash/logo_flutter_1080px_clr.png
