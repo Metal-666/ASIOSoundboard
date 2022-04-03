@@ -99,6 +99,10 @@
 				}
 			},
 			"language": "Мова"
+		},
+		"developer": {
+			"header": "Розробник",
+			"become_developer": "Настисни мене щоб стати розробником!"
 		}
 	},
 	"errors": {

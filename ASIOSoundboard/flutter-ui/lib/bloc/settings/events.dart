@@ -63,3 +63,5 @@ class UpdateCustomAccentColor extends SettingsEvent {
 class FinishedPickingCustomAccentColor extends SettingsEvent {}
 
 class CancelPickingCustomAccentColor extends SettingsEvent {}
+
+class BecomeDeveloper extends SettingsEvent {}

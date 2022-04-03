@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 
@@ -10,6 +12,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/settings/bloc.dart';
 import '../bloc/settings/events.dart';
 import '../bloc/settings/state.dart';
+
+final Random _random = Random();
 
 /// A body panel that displays app settings.
 class SettingsView extends StatelessWidget {
@@ -85,9 +89,34 @@ class SettingsView extends StatelessWidget {
         listenWhen: (oldState, newState) =>
             (oldState.pickingAccentColor == null) ^
             (newState.pickingAccentColor == null),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints.expand(),
-          child: _scrollView(),
+        child: Stack(
+          children: <Widget>[
+            ConstrainedBox(
+              constraints: const BoxConstraints.expand(),
+              child: _scrollView(),
+            ),
+            BlocBuilder<SettingsBloc, SettingsState>(
+              buildWhen: (previous, current) =>
+                  current.attemptsToBecomeADeveloper != null &&
+                  (previous.attemptsToBecomeADeveloper == null ||
+                      previous.attemptsToBecomeADeveloper! <
+                          current.attemptsToBecomeADeveloper!),
+              builder: (context, state) =>
+                  state.attemptsToBecomeADeveloper != null
+                      ? Align(
+                          alignment: Alignment(
+                            _random.nextDouble() * 2 - 1,
+                            _random.nextDouble() * 2 - 1,
+                          ),
+                          child: Transform.scale(
+                            scale: 1.0 -
+                                ((state.attemptsToBecomeADeveloper ?? 1) / 30),
+                            child: _developerButton(context),
+                          ),
+                        )
+                      : const SizedBox(),
+            ),
+          ],
         ),
       );
 
@@ -99,6 +128,7 @@ class SettingsView extends StatelessWidget {
             'settings.audio.header'.tr(): _audioSettings(),
             'settings.board.header'.tr(): _boardSettings(),
             'settings.ui.header'.tr(): _uiSettings(),
+            'settings.developer.header'.tr(): _developerSettings(),
           }
               .entries
               .map<Widget>(
@@ -214,15 +244,18 @@ class SettingsView extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    Text(
-                      'settings.audio.autostart'.tr(),
-                      style: Theme.of(context).textTheme.subtitle1,
+                    Flexible(
+                      child: Text(
+                        'settings.audio.autostart'.tr(),
+                        style: Theme.of(context).textTheme.subtitle1,
+                      ),
                     ),
                     Switch(
-                        value: state.autoStartEngine,
-                        onChanged: (value) => context
-                            .read<SettingsBloc>()
-                            .add(AutoStartEngineChanged(value))),
+                      value: state.autoStartEngine,
+                      onChanged: (value) => context
+                          .read<SettingsBloc>()
+                          .add(AutoStartEngineChanged(value)),
+                    ),
                   ],
                 ),
               ),
@@ -341,6 +374,15 @@ class SettingsView extends StatelessWidget {
             ],
           ));
 
+  Widget _developerSettings() => BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, state) => Column(
+            children: <Widget>[
+              if (state.attemptsToBecomeADeveloper == null)
+                _developerButton(context)
+              //_settingsSection(<MapEntry<String?, Widget?>>[])
+            ],
+          ));
+
   Widget _settingsSection(List<MapEntry<String?, Widget?>> elements) => Column(
         children: elements
             .map<Column>((e) => Column(children: <Widget>[
@@ -356,4 +398,39 @@ class SettingsView extends StatelessWidget {
             .toList()
           ..last.children.removeLast(),
       );
+
+  Widget _developerButton(BuildContext context) => _fakeButton(
+        icon: const Icon(Icons.code),
+        label: Text('settings.developer.become_developer'.tr()),
+        onPressed: () => context.read<SettingsBloc>().add(BecomeDeveloper()),
+      );
+
+  Widget _fakeButton({
+    required Icon icon,
+    required Widget label,
+    required void Function() onPressed,
+  }) =>
+      Builder(
+          builder: (context) => GestureDetector(
+                onTapDown: (details) => onPressed(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: const BorderRadius.all(Radius.circular(5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(5),
+                        child: icon,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(5),
+                        child: label,
+                      ),
+                    ],
+                  ),
+                ),
+              ));
 }

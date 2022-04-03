@@ -103,6 +103,10 @@
 				"en": "English",
 				"uk": "Українська"
 			}
+		},
+		"developer": {
+			"header": "Developer",
+			"become_developer": "Click me to become a developer!"
 		}
 	},
 	"errors": {

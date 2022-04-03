@@ -31,6 +31,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           SettingsState.accentModeConverter[_settingsRepository.accentMode] ??
               AccentMode.original,
           null,
+          null,
         )) {
     // Start listening to the host events. We mainly want to know when the lists requested above arrive and when an Audio Device or Sample Rate updates are processed by the server.
     _subscription = _clientRepository.eventStream.stream
@@ -128,6 +129,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     });
     on<CancelPickingCustomAccentColor>(
         (event, emit) => emit(state.copyWith(pickingAccentColor: () => null)));
+    on<BecomeDeveloper>((event, emit) => emit(state.copyWith(
+        attemptsToBecomeADeveloper: () =>
+            state.attemptsToBecomeADeveloper == null
+                ? 0
+                : state.attemptsToBecomeADeveloper! + 1)));
   }
 
   @override
