@@ -27,7 +27,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
-  await SystemTheme.accentInstance.load();
+  await SystemTheme.accentColor.load();
 
   final ClientRepository clientRepository = ClientRepository();
   final SettingsRepository settingsRepository = SettingsRepository();
@@ -68,7 +68,7 @@ void main() async {
               }
             case AccentMode.system:
               {
-                accentColor = SystemTheme.accentInstance.accent;
+                accentColor = SystemTheme.accentColor.accent;
 
                 break;
               }
@@ -224,6 +224,7 @@ class Root extends StatelessWidget {
           if (state.error != null) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 7),
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,

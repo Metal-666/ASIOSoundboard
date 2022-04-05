@@ -183,13 +183,13 @@ namespace ASIOSoundboard.Audio {
 
 				AudioFileReader? source = ValidateAudioFile(file, () => OnError?.Invoke(this, new PlaybackErrorEventArgs() {
 
-					Subject = PlaybackErrorEventArgs.FILE,
-					Error = PlaybackErrorEventArgs.File.NOT_FOUND,
+					Subject = FileErrorEventArgs.FILE,
+					Error = FileErrorEventArgs.File.NOT_FOUND,
 					Path = file
 
 				}), (sampleRate) => OnError?.Invoke(this, new PlaybackErrorEventArgs() {
 
-					Subject = PlaybackErrorEventArgs.FILE,
+					Subject = FileErrorEventArgs.FILE,
 					Error = PlaybackErrorEventArgs.File.UNSUPPORTED_SAMPLE_RATE,
 					Path = file,
 					SampleRate = sampleRate
@@ -249,8 +249,8 @@ namespace ASIOSoundboard.Audio {
 
 				OnError?.Invoke(this, new ResamplingErrorEventArgs() {
 
-					Subject = ResamplingErrorEventArgs.FILE,
-					Error = ResamplingErrorEventArgs.File.NOT_FOUND,
+					Subject = FileErrorEventArgs.FILE,
+					Error = FileErrorEventArgs.File.NOT_FOUND,
 					Path = file
 
 				});

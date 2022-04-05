@@ -378,8 +378,7 @@ class SettingsView extends StatelessWidget {
       builder: (context, state) => Column(
             children: <Widget>[
               if (state.attemptsToBecomeADeveloper == null)
-                _developerButton(context)
-              //_settingsSection(<MapEntry<String?, Widget?>>[])
+                _developerButton(context),
             ],
           ));
 

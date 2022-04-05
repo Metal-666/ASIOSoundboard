@@ -123,7 +123,7 @@ namespace ASIOSoundboard.Web.Controllers {
 				hostEventsModule.ErrorHandler(this, new AudioManager.FileLoadErrorEventArgs() {
 
 					Subject = AudioManager.FileErrorEventArgs.FILE,
-					Error = AudioManager.FileLoadErrorEventArgs.File.NOT_FOUND,
+					Error = AudioManager.FileErrorEventArgs.File.NOT_FOUND,
 					Path = path
 
 				});
