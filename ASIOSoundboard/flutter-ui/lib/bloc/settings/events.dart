@@ -14,16 +14,26 @@ class WebsocketEvent extends SettingsEvent {
   WebsocketEvent(this.message);
 }
 
-class SampleRateChanged extends SettingsEvent {
-  final int? sampleRate;
+class OpenGithub extends SettingsEvent {}
 
-  SampleRateChanged(this.sampleRate);
-}
+class ShowGithubActions extends SettingsEvent {}
+
+class HideGithubActions extends SettingsEvent {}
+
+class OpenGithubIssues extends SettingsEvent {}
+
+class OpenGithubWiki extends SettingsEvent {}
 
 class ASIODeviceChanged extends SettingsEvent {
   final String? asioDevice;
 
   ASIODeviceChanged(this.asioDevice);
+}
+
+class SampleRateChanged extends SettingsEvent {
+  final int? sampleRate;
+
+  SampleRateChanged(this.sampleRate);
 }
 
 abstract class VolumeEvent extends SettingsEvent {

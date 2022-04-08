@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../data/network/websocket_events.dart';
 import '../../data/settings/settings_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +13,8 @@ import 'events.dart';
 import 'state.dart';
 
 import '../../util/extensions.dart';
+
+const String githubRepo = 'https://github.com/Metal-666/ASIOSoundboard';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final ClientRepository _clientRepository;
@@ -32,6 +36,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
               AccentMode.original,
           null,
           null,
+          false,
         )) {
     // Start listening to the host events. We mainly want to know when the lists requested above arrive and when an Audio Device or Sample Rate updates are processed by the server.
     _subscription = _clientRepository.eventStream.stream
@@ -60,6 +65,15 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         default:
       }
     });
+    on<OpenGithub>((event, emit) async => await launch(githubRepo));
+    on<ShowGithubActions>(
+        (event, emit) => emit(state.copyWith(showGithubActions: () => true)));
+    on<HideGithubActions>(
+        (event, emit) => emit(state.copyWith(showGithubActions: () => false)));
+    on<OpenGithubIssues>(
+        (event, emit) async => await launch(githubRepo + '/issues'));
+    on<OpenGithubWiki>(
+        (event, emit) async => await launch(githubRepo + '/wiki'));
     on<ASIODeviceChanged>((event, emit) {
       if (event.asioDevice != null) {
         log('Changing Audio Device to ${event.asioDevice}');

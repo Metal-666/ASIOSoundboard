@@ -64,6 +64,10 @@
 		}
 	},
 	"settings": {
+		"github": {
+			"issues": "Issues",
+			"wiki": "Wiki"
+		},
 		"audio": {
 			"header": "Audio",
 			"asio_device": "ASIO Device",

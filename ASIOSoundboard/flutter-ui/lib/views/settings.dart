@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../bloc/root/bloc.dart';
 import '../bloc/root/events.dart';
@@ -121,10 +122,72 @@ class SettingsView extends StatelessWidget {
       );
 
   /// The root panel of the settings. Contains cards with different settings categories.
-  Widget _scrollView() => SingleChildScrollView(
-        child: Column(
+  Widget _scrollView() {
+    Widget _githubAction(
+      bool show,
+      Widget action,
+    ) =>
+        AnimatedOpacity(
+          opacity: show ? 1 : 0,
+          duration: const Duration(milliseconds: 750),
+          curve: Curves.easeInOutCubicEmphasized,
+          child: action,
+        );
+
+    return SingleChildScrollView(
+      child: Column(
+        children: <Widget>[
+          BlocBuilder<SettingsBloc, SettingsState>(
+            builder: (context, state) => MouseRegion(
+              onEnter: (event) =>
+                  context.read<SettingsBloc>().add(ShowGithubActions()),
+              onExit: (event) =>
+                  context.read<SettingsBloc>().add(HideGithubActions()),
+              child: Padding(
+                padding: const EdgeInsets.all(5).copyWith(top: 20),
+                child: IntrinsicWidth(
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: _githubAction(
+                          state.showGithubActions,
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.warning_amber),
+                            label: Text('settings.github.issues'.tr()),
+                            onPressed: () => context
+                                .read<SettingsBloc>()
+                                .add(OpenGithubIssues()),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: IconButton(
+                          icon: const Icon(FontAwesomeIcons.github),
+                          iconSize: 50,
+                          onPressed: () =>
+                              context.read<SettingsBloc>().add(OpenGithub()),
+                        ),
+                      ),
+                      Expanded(
+                        child: _githubAction(
+                          state.showGithubActions,
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.menu_book),
+                            label: Text('settings.github.wiki'.tr()),
+                            onPressed: () => context
+                                .read<SettingsBloc>()
+                                .add(OpenGithubWiki()),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
           // This is why I love Dart. Just look at how beatiful and compact below code is. If you are not sure what it does, it creates a map (inline) where keys are the titles of each setting section and values are the widgets that represent the content of each card. Then it loops throught all the pairs and maps them to a list of Widgets that are created using the _settingsCard() function by passing the key and the value as the parameters.
-          children: <String, Widget>{
+          ...<String, Widget>{
             'settings.audio.header'.tr(): _audioSettings(),
             'settings.board.header'.tr(): _boardSettings(),
             'settings.ui.header'.tr(): _uiSettings(),
@@ -137,9 +200,11 @@ class SettingsView extends StatelessWidget {
                   content: entry.value,
                 ),
               )
-              .toList(),
-        ),
-      );
+              .toList()
+        ],
+      ),
+    );
+  }
 
   /// Builds a basic card for a settings category. Makes [header] the title of the card and puts [content] underneath.
   Widget _settingsCard({

@@ -64,6 +64,10 @@
 		}
 	},
 	"settings": {
+		"github": {
+			"issues": "Питання",
+			"wiki": "Вікі"
+		},
 		"audio": {
 			"header": "Звук",
 			"asio_device": "ASIO Пристрій",

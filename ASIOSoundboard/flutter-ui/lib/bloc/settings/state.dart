@@ -16,6 +16,8 @@ class SettingsState {
 
   final int? attemptsToBecomeADeveloper;
 
+  final bool showGithubActions;
+
   final AccentMode accentMode;
   static final BiMap<String, AccentMode> accentModeConverter =
       BiMap<String, AccentMode>()
@@ -35,6 +37,7 @@ class SettingsState {
     this.accentMode,
     this.pickingAccentColor,
     this.attemptsToBecomeADeveloper,
+    this.showGithubActions,
   );
 
   SettingsState copyWith({
@@ -47,6 +50,7 @@ class SettingsState {
     AccentMode Function()? accentMode,
     Color? Function()? pickingAccentColor,
     int? Function()? attemptsToBecomeADeveloper,
+    bool Function()? showGithubActions,
   }) =>
       SettingsState(
         sampleRate == null ? this.sampleRate : sampleRate.call(),
@@ -62,6 +66,9 @@ class SettingsState {
         attemptsToBecomeADeveloper == null
             ? this.attemptsToBecomeADeveloper
             : attemptsToBecomeADeveloper.call(),
+        showGithubActions == null
+            ? this.showGithubActions
+            : showGithubActions.call(),
       );
 }
 
