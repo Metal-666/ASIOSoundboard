@@ -6,6 +6,7 @@ using EmbedIO.WebApi;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -78,14 +79,14 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			return new Dictionary<string, string>() {
 			
-				{ "file", file ?? "" }
+				{ "file", file }
 				
 			};
 
 		}
 
 		[Route(HttpVerbs.Get, "/load-file")]
-		public async Task<Dictionary<string, string?>> LoadFile([QueryField] string filter) {
+		public async Task<Dictionary<string, string?>> LoadFile([QueryField(false)] string filter) {
 
 			logger.LogInformation("Loading a file");
 
@@ -100,7 +101,7 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Get, "/read-file")]
-		public Dictionary<string, string?> ReadFile([QueryField] string path) {
+		public Dictionary<string, string?> ReadFile([QueryField(false)] string path) {
 
 			logger.LogInformation("Loading a file ({})", path);
 
@@ -135,7 +136,7 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Get, "/file-exists")]
-		public async Task<Dictionary<string, bool>> FileExists([QueryField] string path) {
+		public async Task<Dictionary<string, bool>> FileExists([QueryField(false)] string path) {
 
 			logger.LogInformation("Checking if file exists");
 
@@ -154,11 +155,26 @@ namespace ASIOSoundboard.Web.Controllers {
 		#region Verb: POST
 
 		[Route(HttpVerbs.Post, "/start-audio-engine")]
-		public void StartAudioEngine([FormField] string device, [FormField] int rate = 48000, [FormField] float volume = 1) {
+		public void StartAudioEngine([FormData] NameValueCollection data) {
 
-			logger.LogInformation("Starting Audio Engine with AudioEngine={}, SampleRate={}, GlobalVolume={}", device, rate, volume);
+			int? rate = null;
+			float? volume = null;
 
-			audioManager.StartAudioEngine(device, rate, volume);
+			if(int.TryParse(data["rate"], out int rateResult)) {
+
+				rate = rateResult;
+
+			}
+
+			if(float.TryParse(data["volume"], out float volumeResult)) {
+
+				volume = volumeResult;
+
+			}
+
+			logger.LogInformation("Starting Audio Engine with AudioEngine={}, SampleRate={}, GlobalVolume={}", data["device"], rate, volume);
+
+			audioManager.StartAudioEngine(data["device"], rate, volume);
 
 		}
 
@@ -172,8 +188,8 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Post, "/global-volume")]
-		public void GlobalVolume([FormField] float volume = 1) {
-
+		public void GlobalVolume([FormField(false)] float volume) {
+		2
 			logger.LogInformation("Setting Global Volume to {}", volume);
 
 			audioManager.SetGlobalVolume(volume);
@@ -181,11 +197,11 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Post, "/save-file")]
-		public async Task<Dictionary<string, string?>> SaveFile([FormField] string filter, [FormField] string ext, [FormField] string content) {
+		public async Task<Dictionary<string, string?>> SaveFile([FormData] NameValueCollection data) {
 
 			logger.LogInformation("Saving a file");
 
-			string? path = await System.Windows.Application.Current.Dispatcher.Invoke(() => SaveFileTask(filter, ext, content));
+			string? path = await System.Windows.Application.Current.Dispatcher.Invoke(() => SaveFileTask(data.Get("filter"), data.Get("ext"), data.Get("content")));
 
 			return new Dictionary<string, string?>{
 
@@ -196,11 +212,13 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Post, "/resample-file")]
-		public void ResampleFile([FormField] string file, [FormField] int rate) {
+		public void ResampleFile([FormData] NameValueCollection data) {
 
-			logger.LogInformation("Resampling a file");
+			string? file = data.Get("file");
 
-			if(file != null) {
+			if(file != null && int.TryParse(data.Get("rate"), out int rate)) {
+
+				logger.LogInformation("Resampling a file ({} @ {})", file, rate);
 
 				audioManager.ResampleFile(file, rate);
 
@@ -208,7 +226,7 @@ namespace ASIOSoundboard.Web.Controllers {
 
 			else {
 
-				logger.LogInformation("Can't resample file: one of parameters is null (file: {}, rate: {})", file, rate);
+				logger.LogInformation("Can't resample file: one of parameters is null ({} @ {})", file, data.Get("rate"));
 
 			}
 

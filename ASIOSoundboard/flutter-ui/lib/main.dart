@@ -207,8 +207,17 @@ class Root extends StatelessWidget {
                 ),
               ),
               ElevatedButton(
-                onPressed: () =>
-                    context.read<RootBloc>().add(AudioEngineToggled()),
+                onPressed: () {
+                  SettingsRepository settingsRepository =
+                      context.read<SettingsRepository>();
+
+                  return settingsRepository.audioDevice == null ||
+                      settingsRepository.sampleRate == null;
+                }()
+                    ? () => context
+                        .read<RootBloc>()
+                        .add(AudioEngineToggled()) //null
+                    : () => context.read<RootBloc>().add(AudioEngineToggled()),
                 child: Text(
                     'root.engine_status.${state.isAudioEngineRunning ? 'stop' : 'start'}'
                         .tr()),

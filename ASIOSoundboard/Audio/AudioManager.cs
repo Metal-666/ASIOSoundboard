@@ -45,7 +45,7 @@ namespace ASIOSoundboard.Audio {
 			
 			}
 
-			else if(audioDevice == null) {
+			else if(string.IsNullOrEmpty(audioDevice)) {
 
 				OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
 
@@ -365,6 +365,12 @@ namespace ASIOSoundboard.Audio {
 			[JsonPropertyName("description")]
 			public string? Description { get; set; }
 
+			public ErrorEventArgs(string category) {
+
+				Category = category;
+
+			}
+
 		}
 
 		public abstract class FileErrorEventArgs : ErrorEventArgs {
@@ -380,11 +386,7 @@ namespace ASIOSoundboard.Audio {
 			[JsonPropertyName("path")]
 			public string? Path { get; set; }
 
-			public FileErrorEventArgs(string category) {
-			
-				Category = category;
-			
-			}
+			public FileErrorEventArgs(string category) : base(category) {}
 
 		}
 
@@ -417,11 +419,7 @@ namespace ASIOSoundboard.Audio {
 			[JsonPropertyName("device")]
 			public string? Device { get; set; }
 
-			public AudioEngineErrorEventArgs() {
-
-				Category = "audio_engine";
-			
-			}
+			public AudioEngineErrorEventArgs() : base("audio_engine") {}
 
 		}
 
@@ -442,9 +440,9 @@ namespace ASIOSoundboard.Audio {
 			}
 
 			[JsonPropertyName("sample_rate")]
-			public int SampleRate { get; set; }
+			public int? SampleRate { get; set; }
 
-			public PlaybackErrorEventArgs() : base("file") {}
+			public PlaybackErrorEventArgs() : base("playback") {}
 
 		}
 

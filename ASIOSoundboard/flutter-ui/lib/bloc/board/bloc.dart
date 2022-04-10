@@ -71,12 +71,14 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     on<PickTilePath>((event, emit) async {
       String? path = await _clientRepository.pickFilePath();
 
-      emit(state.copyWith(
-        dialog: () => state.dialog?.copyWith(
-          tilePath: () => path,
-          shouldOverwritePath: () => true,
-        ),
-      ));
+      if (path != null) {
+        emit(state.copyWith(
+          dialog: () => state.dialog?.copyWith(
+            tilePath: () => path,
+            shouldOverwritePath: () => true,
+          ),
+        ));
+      }
     });
     on<TileDialogClosed>(
         (event, emit) => emit(state.copyWith(dialog: () => null)));

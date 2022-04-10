@@ -79,7 +79,7 @@ class ClientRepository {
     log('Picking file...');
 
     return _makeCoreGetRequest(CoreGetRequest.pickFile)
-        .then((value) => value?['file'] as String);
+        .then((value) => value?['file'] as String?);
   }
 
   Future<String?> loadFile(String? filter) {
@@ -115,12 +115,12 @@ class ClientRepository {
     ).then((value) => value?['exists'] as bool?);
   }
 
-  Future<void> setGlobalVolume(double glbablVolume) {
+  Future<void> setGlobalVolume(double? glbablVolume) {
     log('Setting Global Volume...');
 
     return _makeCorePostRequest(
       CorePostRequest.globalVolume,
-      <String, String>{'volume': glbablVolume.toString()},
+      <String, String?>{'volume': glbablVolume?.toString()},
     );
   }
 
@@ -132,10 +132,10 @@ class ClientRepository {
     log('Starting Audio Engine with AudioDevice=$audioDevice, SampleRate=$sampleRate and GlobalVolume=$globalVolume');
 
     return _makeCorePostRequest(
-        CorePostRequest.startAudioEngine, <String, String>{
-      'device': audioDevice.toString(),
-      'rate': sampleRate.toString(),
-      'volume': globalVolume.toString(),
+        CorePostRequest.startAudioEngine, <String, String?>{
+      'device': audioDevice,
+      'rate': sampleRate?.toString(),
+      'volume': globalVolume?.toString(),
     });
   }
 
@@ -150,7 +150,7 @@ class ClientRepository {
 
     return _makeCorePostRequest(
       CorePostRequest.resampleFile,
-      <String, String>{
+      <String, String?>{
         'file': file,
         'rate': sampleRate.toString(),
       },
@@ -163,12 +163,16 @@ class ClientRepository {
     return _makeCorePostRequest(CorePostRequest.reload);
   }
 
-  Future<String?> saveFile(String filter, String defaultExt, String content) {
+  Future<String?> saveFile(
+    String filter,
+    String defaultExt,
+    String content,
+  ) {
     log('Saving a file...');
 
     return _makeCorePostRequest(
       CorePostRequest.saveFile,
-      <String, String>{
+      <String, String?>{
         'filter': filter,
         'ext': defaultExt,
         'content': content,
@@ -181,9 +185,9 @@ class ClientRepository {
 
     return _makePublicPostRequest(
       PublicPostRequest.play,
-      <String, String>{
+      <String, String?>{
         'file': file,
-        'volume': (volume ?? 1).toString(),
+        'volume': volume?.toString(),
       },
     );
   }
@@ -234,7 +238,7 @@ class ClientRepository {
     if (response.statusCode == 200 && body.isNotEmpty) {
       return jsonDecode(body);
     } else {
-      log('Host responded with an error!');
+      log('Host responded with an error! (${response.statusCode} | ${response.body})');
 
       return null;
     }
@@ -242,7 +246,7 @@ class ClientRepository {
 
   Future<dynamic> _makeCorePostRequest(
     CorePostRequest request, [
-    Map<String, String>? body,
+    Map<String, String?>? body,
   ]) async {
     final Response response = await _makePostRequest(
       Uri.http(
@@ -265,7 +269,7 @@ class ClientRepository {
 
       return null;
     } else {
-      log('Host responded with an error!');
+      log('Host responded with an error! (${response.statusCode} | ${response.body})');
 
       return null;
     }
@@ -273,7 +277,7 @@ class ClientRepository {
 
   Future<dynamic> _makePublicPostRequest(
     PublicPostRequest request, [
-    Map<String, String>? body,
+    Map<String, String?>? body,
   ]) async {
     final Response response = await _makePostRequest(
       Uri.http(
@@ -296,7 +300,7 @@ class ClientRepository {
 
       return null;
     } else {
-      log('Host responded with an error!');
+      log('Host responded with an error! (${response.statusCode} | ${response.body})');
 
       return null;
     }
@@ -310,9 +314,18 @@ class ClientRepository {
     });
   }
 
-  Future<Response> _makePostRequest(Uri uri, {Object? body}) {
-    return _client.post(uri, body: body).then((value) {
-      log('Made a POST request to $uri');
+  Future<Response> _makePostRequest(
+    Uri uri, {
+    Map<String, String?>? body,
+  }) {
+    return _client
+        .post(
+      uri,
+      body: (body?..removeWhere((key, value) => value == null))
+          ?.cast<String, String>(),
+    )
+        .then((value) {
+      log('Made a POST request to $uri (body: $body)');
 
       return value;
     });

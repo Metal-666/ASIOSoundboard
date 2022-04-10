@@ -47,7 +47,7 @@
 			},
 			"path": {
 				"header": "Tile Sound Path",
-				"placeholder": "D:\\Sounds\bruh.wav",
+				"placeholder": "D:\\Sounds\\bruh.wav",
 				"browse": "Browse",
 				"errors": {
 					"empty": "Path can't be empty",
