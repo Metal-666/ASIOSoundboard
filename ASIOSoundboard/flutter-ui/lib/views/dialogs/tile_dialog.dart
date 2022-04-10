@@ -1,23 +1,15 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../../bloc/board/bloc.dart';
 import '../../bloc/board/events.dart';
 import '../../bloc/board/state.dart';
 
 /// Dialog that appears when user wants to add a new tile.
-class TileDialog extends StatefulWidget {
+class TileDialog extends HookWidget {
   const TileDialog({Key? key}) : super(key: key);
-
-  @override
-  State<TileDialog> createState() => _TileDialogState();
-}
-
-// I'm not a fan of using stateful widgets in a bloc app, but there is no other way - TextEditingController needs to be disposed
-class _TileDialogState extends State<TileDialog> {
-  final TextEditingController nameController = TextEditingController(),
-      pathController = TextEditingController();
 
   @override
   Widget build(BuildContext context) => AlertDialog(
@@ -27,7 +19,11 @@ class _TileDialogState extends State<TileDialog> {
               'board.tile_dialog.title.${state.dialog?.editedTile == null ? 'new_tile' : 'edit_tile'}'
                   .tr()),
         ),
-        content: _form(),
+        content: _form(
+          context,
+          useTextEditingController(),
+          useTextEditingController(),
+        ),
         actions: <Widget>[
           TextButton(
             child: Text('board.tile_dialog.actions.cancel'.tr()),
@@ -42,7 +38,11 @@ class _TileDialogState extends State<TileDialog> {
       );
 
   /// A panel in the middle of the dialog, has most of it's important stuff.
-  Widget _form() {
+  Widget _form(
+    BuildContext context,
+    TextEditingController nameController,
+    TextEditingController pathController,
+  ) {
     Widget _sectionHeader(String text) => Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3),
           child: Text(
@@ -151,13 +151,5 @@ class _TileDialogState extends State<TileDialog> {
       ..selection = TextSelection.fromPosition(
         TextPosition(offset: controller.text.length),
       );
-  }
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    pathController.dispose();
-
-    super.dispose();
   }
 }

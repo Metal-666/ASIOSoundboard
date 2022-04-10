@@ -6,6 +6,7 @@ import 'package:asio_soundboard/util/extensions.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:system_theme/system_theme.dart';
 
 import 'bloc/board/bloc.dart';
@@ -140,7 +141,7 @@ void main() async {
   clientRepository.initWebsockets();
 }
 
-class Root extends StatefulWidget {
+class Root extends HookWidget {
   final BoardBloc boardBloc;
   final SettingsBloc settingsBloc;
 
@@ -151,19 +152,12 @@ class Root extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<Root> createState() => _RootState();
-}
-
-class _RootState extends State<Root> {
-  final PageController pageController = PageController();
-
-  @override
   Widget build(BuildContext context) => Scaffold(
         body: Stack(
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.only(top: 45),
-              child: _body(),
+              child: _body(usePageController()),
             ),
             _topInfoBar(context),
           ],
@@ -233,7 +227,8 @@ class _RootState extends State<Root> {
       );
 
   /// The main panel of the app. Displays a page depending on the current navigation state.
-  Widget _body() => BlocListener<RootBloc, RootState>(
+  Widget _body(PageController pageController) =>
+      BlocListener<RootBloc, RootState>(
         listener: (context, state) {
           if (state.error != null) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -295,11 +290,11 @@ class _RootState extends State<Root> {
           controller: pageController,
           children: <Widget>[
             BlocProvider<BoardBloc>.value(
-              value: widget.boardBloc..add(board_events.PageLoaded()),
+              value: boardBloc..add(board_events.PageLoaded()),
               child: BoardView(),
             ),
             BlocProvider<SettingsBloc>.value(
-              value: widget.settingsBloc..add(settings_events.PageLoaded()),
+              value: settingsBloc..add(settings_events.PageLoaded()),
               child: SettingsView(),
             ),
           ],
@@ -336,11 +331,4 @@ class _RootState extends State<Root> {
           ),
         ),
       );
-
-  @override
-  void dispose() {
-    pageController.dispose();
-
-    super.dispose();
-  }
 }
