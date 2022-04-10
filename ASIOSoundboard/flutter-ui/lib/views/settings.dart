@@ -135,6 +135,7 @@ class SettingsView extends StatelessWidget {
         );
 
     return SingleChildScrollView(
+      primary: false,
       child: Column(
         children: <Widget>[
           BlocBuilder<SettingsBloc, SettingsState>(

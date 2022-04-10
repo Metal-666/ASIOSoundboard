@@ -140,17 +140,22 @@ void main() async {
   clientRepository.initWebsockets();
 }
 
-class Root extends StatelessWidget {
-  final PageController pageController = PageController();
-
+class Root extends StatefulWidget {
   final BoardBloc boardBloc;
   final SettingsBloc settingsBloc;
 
-  Root(
+  const Root(
     this.boardBloc,
     this.settingsBloc, {
     Key? key,
   }) : super(key: key);
+
+  @override
+  State<Root> createState() => _RootState();
+}
+
+class _RootState extends State<Root> {
+  final PageController pageController = PageController();
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -290,11 +295,11 @@ class Root extends StatelessWidget {
           controller: pageController,
           children: <Widget>[
             BlocProvider<BoardBloc>.value(
-              value: boardBloc..add(board_events.PageLoaded()),
+              value: widget.boardBloc..add(board_events.PageLoaded()),
               child: BoardView(),
             ),
             BlocProvider<SettingsBloc>.value(
-              value: settingsBloc..add(settings_events.PageLoaded()),
+              value: widget.settingsBloc..add(settings_events.PageLoaded()),
               child: SettingsView(),
             ),
           ],
@@ -331,4 +336,11 @@ class Root extends StatelessWidget {
           ),
         ),
       );
+
+  @override
+  void dispose() {
+    pageController.dispose();
+
+    super.dispose();
+  }
 }
