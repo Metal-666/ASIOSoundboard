@@ -117,6 +117,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
               soundboard: () => Soundboard(<Tile>[tile]),
               dialog: () => null,
             ));
+            if (!_settingsRepository.seenTileTutorial) {
+              await Future.delayed(const Duration(milliseconds: 500));
+              emit(state.copyWith(tutorialTile: () => tile));
+            }
           } else {
             emit(state.copyWith(
               dialog: () => null,
@@ -138,6 +142,11 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
           ));
         }
       }
+    });
+    on<CloseTileTutorial>((event, emit) {
+      _settingsRepository.seenTileTutorial = true;
+
+      emit(state.copyWith(tutorialTile: () => null));
     });
     on<TileDialogNameChanged>((event, emit) => emit(state.copyWith(
         dialog: () => state.dialog?.copyWith(tileName: () => event.name))));

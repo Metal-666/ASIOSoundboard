@@ -6,16 +6,20 @@ class BoardState {
 
   final Tile? rightClickedTile;
 
+  final Tile? tutorialTile;
+
   const BoardState(
     this.soundboard,
     this.dialog, {
     this.rightClickedTile,
+    this.tutorialTile,
   });
 
   BoardState copyWith({
     Soundboard? Function()? soundboard,
     TileDialog? Function()? dialog,
     Tile? Function()? rightClickedTile,
+    Tile? Function()? tutorialTile,
   }) =>
       BoardState(
         soundboard == null ? this.soundboard : soundboard.call(),
@@ -23,6 +27,8 @@ class BoardState {
         rightClickedTile: rightClickedTile == null
             ? this.rightClickedTile
             : rightClickedTile.call(),
+        tutorialTile:
+            tutorialTile == null ? this.tutorialTile : tutorialTile.call(),
       );
 }
 

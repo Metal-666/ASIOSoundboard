@@ -29,6 +29,8 @@ class TileDialogClosed extends BoardEvent {}
 
 class TileDialogSubmitted extends BoardEvent {}
 
+class CloseTileTutorial extends BoardEvent {}
+
 class TileDialogNameChanged extends BoardEvent {
   final String? name;
 

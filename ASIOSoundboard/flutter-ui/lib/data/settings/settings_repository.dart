@@ -84,6 +84,12 @@ class SettingsRepository {
       preferences.setString(_Settings.defaultSoundboard, defaultSoundboard);
     }
   }
+
+  bool get seenTileTutorial =>
+      preferences.getBool(_Settings.seenTileTutorial) ?? false;
+
+  set seenTileTutorial(bool seenTileTutorial) =>
+      preferences.setBool(_Settings.seenTileTutorial, seenTileTutorial);
 }
 
 class _Settings {
@@ -94,5 +100,6 @@ class _Settings {
       autoStartEngine = 'autoStartEngine',
       accentMode = 'accentMode',
       customAccentColor = 'customAccentColor',
-      defaultSoundboard = 'defaultSoundboard';
+      defaultSoundboard = 'defaultSoundboard',
+      seenTileTutorial = 'seenTileTutorial';
 }

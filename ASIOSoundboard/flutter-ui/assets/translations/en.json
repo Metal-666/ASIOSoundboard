@@ -61,6 +61,11 @@
 				"cancel": "Cancel",
 				"done": "Done"
 			}
+		},
+		"tile_tutorial": {
+			"left_click": "Left click to play tile sound",
+			"right_click": "Right click to show tile actions",
+			"got_it": "Got it"
 		}
 	},
 	"settings": {

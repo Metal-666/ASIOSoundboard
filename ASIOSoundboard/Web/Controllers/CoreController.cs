@@ -189,7 +189,7 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		[Route(HttpVerbs.Post, "/global-volume")]
 		public void GlobalVolume([FormField(false)] float volume) {
-		2
+		
 			logger.LogInformation("Setting Global Volume to {}", volume);
 
 			audioManager.SetGlobalVolume(volume);
