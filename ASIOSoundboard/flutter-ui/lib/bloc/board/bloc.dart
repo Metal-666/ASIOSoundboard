@@ -28,9 +28,9 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       switch (event.message.type) {
         case WebsocketMessageType.appLoaded:
           {
-            if (_settingsRepository.defaultSoundboard != null) {
+            if (_settingsRepository.getDefaultSoundboard() != null) {
               String? content = await _clientRepository
-                  .readFile(_settingsRepository.defaultSoundboard);
+                  .readFile(_settingsRepository.getDefaultSoundboard());
 
               if (content != null) {
                 emit(state.copyWith(
@@ -117,7 +117,7 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
               soundboard: () => Soundboard(<Tile>[tile]),
               dialog: () => null,
             ));
-            if (!_settingsRepository.seenTileTutorial) {
+            if (!_settingsRepository.getSeenTileTutorial()) {
               await Future.delayed(const Duration(milliseconds: 500));
               emit(state.copyWith(tutorialTile: () => tile));
             }
@@ -143,8 +143,8 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
         }
       }
     });
-    on<CloseTileTutorial>((event, emit) {
-      _settingsRepository.seenTileTutorial = true;
+    on<CloseTileTutorial>((event, emit) async {
+      await _settingsRepository.setSeenTileTutorial(true);
 
       emit(state.copyWith(tutorialTile: () => null));
     });
@@ -187,7 +187,7 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
         );
 
         if (path != null) {
-          _settingsRepository.defaultSoundboard = path;
+          await _settingsRepository.setDefaultSoundboard(path);
         }
       } else {
         log('Can\'t save soundboard - it\'s null');

@@ -7,88 +7,65 @@ class SettingsRepository {
   Future<void> init() async =>
       preferences = await SharedPreferences.getInstance();
 
-  String? get audioDevice => preferences.getString(_Settings.audioDevice);
+  Future<bool> _applyStringPreference(String key, String? value) =>
+      value == null
+          ? preferences.remove(key)
+          : preferences.setString(key, value);
 
-  set audioDevice(String? audioDevice) {
-    if (audioDevice == null) {
-      preferences.remove(_Settings.audioDevice);
-    } else {
-      preferences.setString(_Settings.audioDevice, audioDevice);
-    }
-  }
+  Future<bool> _applyDoublePreference(String key, double? value) =>
+      value == null
+          ? preferences.remove(key)
+          : preferences.setDouble(key, value);
 
-  int? get sampleRate => preferences.getInt(_Settings.sampleRate);
+  String? getAudioDevice() => preferences.getString(_Settings.audioDevice);
 
-  set sampleRate(int? sampleRate) {
-    if (sampleRate == null) {
-      preferences.remove(_Settings.sampleRate);
-    } else {
-      preferences.setInt(_Settings.sampleRate, sampleRate);
-    }
-  }
+  Future<bool> setAudioDevice(String? audioDevice) async =>
+      _applyStringPreference(_Settings.audioDevice, audioDevice);
 
-  double get globalVolume => preferences.getDouble(_Settings.globalVolume) ?? 1;
+  int? getSampleRate() => preferences.getInt(_Settings.sampleRate);
 
-  set globalVolume(double? globalVolume) {
-    if (globalVolume == null) {
-      preferences.remove(_Settings.globalVolume);
-    } else {
-      preferences.setDouble(_Settings.globalVolume, globalVolume);
-    }
-  }
+  Future<bool> setSampleRate(int? sampleRate) async => sampleRate == null
+      ? preferences.remove(_Settings.sampleRate)
+      : preferences.setInt(_Settings.sampleRate, sampleRate);
 
-  double get tileSize => preferences.getDouble(_Settings.tileSize) ?? 1;
+  double getGlobalVolume() =>
+      preferences.getDouble(_Settings.globalVolume) ?? 1;
 
-  set tileSize(double? tileSize) {
-    if (tileSize == null) {
-      preferences.remove(_Settings.tileSize);
-    } else {
-      preferences.setDouble(_Settings.tileSize, tileSize);
-    }
-  }
+  Future<bool> setGlobalVolume(double? globalVolume) async =>
+      _applyDoublePreference(_Settings.globalVolume, globalVolume);
 
-  bool get autoStartEngine =>
+  double getTileSize() => preferences.getDouble(_Settings.tileSize) ?? 1;
+
+  Future<bool> setTileSize(double? tileSize) async =>
+      _applyDoublePreference(_Settings.tileSize, tileSize);
+
+  bool getAutoStartEngine() =>
       preferences.getBool(_Settings.autoStartEngine) ?? false;
 
-  set autoStartEngine(bool autoStartEngine) =>
-      preferences.setBool(_Settings.autoStartEngine, autoStartEngine);
+  Future<bool> setAutoStartEngine(bool autoStartEngine) async =>
+      await preferences.setBool(_Settings.autoStartEngine, autoStartEngine);
 
-  String? get accentMode => preferences.getString(_Settings.accentMode);
+  String? getAccentMode() => preferences.getString(_Settings.accentMode);
 
-  set accentMode(String? accentMode) {
-    if (accentMode == null) {
-      preferences.remove(_Settings.accentMode);
-    } else {
-      preferences.setString(_Settings.accentMode, accentMode);
-    }
-  }
+  Future<bool> setAccentMode(String? accentMode) async =>
+      _applyStringPreference(_Settings.accentMode, accentMode);
 
-  String? get customAccentColor =>
+  String? getCustomAccentColor() =>
       preferences.getString(_Settings.customAccentColor);
 
-  set customAccentColor(String? customAccentColor) {
-    if (customAccentColor == null) {
-      preferences.remove(_Settings.customAccentColor);
-    } else {
-      preferences.setString(_Settings.customAccentColor, customAccentColor);
-    }
-  }
+  Future<bool> setCustomAccentColor(String? customAccentColor) async =>
+      _applyStringPreference(_Settings.customAccentColor, customAccentColor);
 
-  String? get defaultSoundboard =>
+  String? getDefaultSoundboard() =>
       preferences.getString(_Settings.defaultSoundboard);
 
-  set defaultSoundboard(String? defaultSoundboard) {
-    if (defaultSoundboard == null) {
-      preferences.remove(_Settings.defaultSoundboard);
-    } else {
-      preferences.setString(_Settings.defaultSoundboard, defaultSoundboard);
-    }
-  }
+  Future<bool> setDefaultSoundboard(String? defaultSoundboard) async =>
+      _applyStringPreference(_Settings.defaultSoundboard, defaultSoundboard);
 
-  bool get seenTileTutorial =>
+  bool getSeenTileTutorial() =>
       preferences.getBool(_Settings.seenTileTutorial) ?? false;
 
-  set seenTileTutorial(bool seenTileTutorial) =>
+  Future<bool> setSeenTileTutorial(bool seenTileTutorial) async =>
       preferences.setBool(_Settings.seenTileTutorial, seenTileTutorial);
 }
 

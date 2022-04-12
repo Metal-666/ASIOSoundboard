@@ -30,9 +30,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           <int>[],
           null,
           <String>[],
-          _settingsRepository.globalVolume,
-          _settingsRepository.autoStartEngine,
-          SettingsState.accentModeConverter[_settingsRepository.accentMode] ??
+          _settingsRepository.getGlobalVolume(),
+          _settingsRepository.getAutoStartEngine(),
+          SettingsState
+                  .accentModeConverter[_settingsRepository.getAccentMode()] ??
               AccentMode.original,
           null,
           null,
@@ -56,8 +57,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             emit(state.copyWith(
               asioDevices: () => audioDevices,
               sampleRates: () => sampleRates,
-              asioDevice: () => _settingsRepository.audioDevice,
-              sampleRate: () => _settingsRepository.sampleRate,
+              asioDevice: () => _settingsRepository.getAudioDevice(),
+              sampleRate: () => _settingsRepository.getSampleRate(),
             ));
 
             break;
@@ -74,48 +75,48 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         (event, emit) async => await launch(githubRepo + '/issues'));
     on<OpenGithubWiki>(
         (event, emit) async => await launch(githubRepo + '/wiki'));
-    on<ASIODeviceChanged>((event, emit) {
+    on<ASIODeviceChanged>((event, emit) async {
       if (event.asioDevice != null) {
         log('Changing Audio Device to ${event.asioDevice}');
 
         emit(state.copyWith(asioDevice: () => event.asioDevice));
 
-        _settingsRepository.audioDevice = event.asioDevice;
+        await _settingsRepository.setAudioDevice(event.asioDevice);
       } else {
         log('Can\'t change Audio Device: null selected');
       }
     });
-    on<SampleRateChanged>((event, emit) {
+    on<SampleRateChanged>((event, emit) async {
       log('Changing Sample Rate to ${event.sampleRate}');
 
       emit(state.copyWith(sampleRate: () => event.sampleRate));
 
-      _settingsRepository.sampleRate = event.sampleRate;
+      await _settingsRepository.setSampleRate(event.sampleRate);
     });
-    on<VolumeChanged>((event, emit) {
+    on<VolumeChanged>((event, emit) async {
       if (state.volume != event.volume) {
         log('Changing global volume to ${event.volume}');
 
         emit(state.copyWith(volume: () => event.volume));
 
-        _clientRepository.setGlobalVolume(event.volume);
+        await _clientRepository.setGlobalVolume(event.volume);
       }
     });
-    on<VolumeChangedFinal>(
-        (event, emit) => _settingsRepository.globalVolume = event.volume);
-    on<AutoStartEngineChanged>((event, emit) {
+    on<VolumeChangedFinal>((event, emit) async =>
+        await _settingsRepository.setGlobalVolume(event.volume));
+    on<AutoStartEngineChanged>((event, emit) async {
       log('Changing autoStartEngine to ${event.autoStart}');
 
       emit(state.copyWith(autoStartEngine: () => event.autoStart));
 
-      _settingsRepository.autoStartEngine = event.autoStart;
+      await _settingsRepository.setAutoStartEngine(event.autoStart);
     });
-    on<AccentModeChanged>((event, emit) {
+    on<AccentModeChanged>((event, emit) async {
       log('Changing accent mode to ${event.accentMode}');
 
       if (event.accentMode != null && state.accentMode != event.accentMode) {
-        _settingsRepository.accentMode =
-            SettingsState.accentModeConverter.inverse[event.accentMode];
+        await _settingsRepository.setAccentMode(
+            SettingsState.accentModeConverter.inverse[event.accentMode]);
 
         _clientRepository.reloadApp();
       }
@@ -124,17 +125,18 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       log('Picking accent color');
 
       emit(state.copyWith(
-          pickingAccentColor: () =>
-              _settingsRepository.customAccentColor == null
-                  ? originalAccentColor
-                  : HexColor.fromHex(_settingsRepository.customAccentColor!)));
+          pickingAccentColor: () => _settingsRepository
+                      .getCustomAccentColor() ==
+                  null
+              ? originalAccentColor
+              : HexColor.fromHex(_settingsRepository.getCustomAccentColor()!)));
     });
     on<UpdateCustomAccentColor>((event, emit) =>
         emit(state.copyWith(pickingAccentColor: () => event.color)));
-    on<FinishedPickingCustomAccentColor>((event, emit) {
+    on<FinishedPickingCustomAccentColor>((event, emit) async {
       if (state.pickingAccentColor != null) {
-        _settingsRepository.customAccentColor =
-            state.pickingAccentColor!.toHex();
+        await _settingsRepository
+            .setCustomAccentColor(state.pickingAccentColor!.toHex());
 
         _clientRepository.reloadApp();
 

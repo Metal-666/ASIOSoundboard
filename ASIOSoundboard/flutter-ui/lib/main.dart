@@ -58,7 +58,7 @@ void main() async {
           Color accentColor;
 
           switch (SettingsState
-                  .accentModeConverter[settingsRepository.accentMode] ??
+                  .accentModeConverter[settingsRepository.getAccentMode()] ??
               AccentMode.original) {
             original:
             case AccentMode.original:
@@ -75,7 +75,7 @@ void main() async {
               }
             case AccentMode.custom:
               {
-                String? color = settingsRepository.customAccentColor;
+                String? color = settingsRepository.getCustomAccentColor();
 
                 if (color != null) {
                   accentColor = HexColor.fromHex(color);
@@ -210,8 +210,8 @@ class Root extends HookWidget {
                   SettingsRepository settingsRepository =
                       context.read<SettingsRepository>();
 
-                  return settingsRepository.audioDevice == null ||
-                      settingsRepository.sampleRate == null;
+                  return settingsRepository.getAudioDevice() == null ||
+                      settingsRepository.getSampleRate() == null;
                 }()
                     ? () => context
                         .read<RootBloc>()

@@ -24,7 +24,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
           0,
           null,
           false,
-          tileSize: _settingsRepository.tileSize,
+          tileSize: _settingsRepository.getTileSize(),
         )) {
     // Start listening to the host events. We are mainly interested in global changes like stopping and starting the Audio Engine, and also errors and other notifications.
     _subscription = _clientRepository.eventStream.stream
@@ -37,13 +37,13 @@ class RootBloc extends Bloc<RootEvent, RootState> {
         case WebsocketMessageType.appLoaded:
           {
             await _clientRepository
-                .setGlobalVolume(_settingsRepository.globalVolume);
+                .setGlobalVolume(_settingsRepository.getGlobalVolume());
 
-            if (_settingsRepository.autoStartEngine) {
+            if (_settingsRepository.getAutoStartEngine()) {
               await _clientRepository.startAudioEngine(
-                _settingsRepository.audioDevice,
-                _settingsRepository.sampleRate,
-                _settingsRepository.globalVolume,
+                _settingsRepository.getAudioDevice(),
+                _settingsRepository.getSampleRate(),
+                _settingsRepository.getGlobalVolume(),
               );
             }
 
@@ -73,9 +73,9 @@ class RootBloc extends Bloc<RootEvent, RootState> {
         await _clientRepository.stopAudioEngine();
       } else {
         await _clientRepository.startAudioEngine(
-          _settingsRepository.audioDevice,
-          _settingsRepository.sampleRate,
-          _settingsRepository.globalVolume,
+          _settingsRepository.getAudioDevice(),
+          _settingsRepository.getSampleRate(),
+          _settingsRepository.getGlobalVolume(),
         );
       }
     });
@@ -95,8 +95,8 @@ class RootBloc extends Bloc<RootEvent, RootState> {
     });
     on<TileSizeChanged>(
         (event, emit) => emit(state.copyWith(tileSize: () => event.tileSize)));
-    on<TileSizeChangedFinal>(
-        (event, emit) => _settingsRepository.tileSize = event.tileSize);
+    on<TileSizeChangedFinal>((event, emit) async =>
+        await _settingsRepository.setTileSize(event.tileSize));
   }
 
   @override
