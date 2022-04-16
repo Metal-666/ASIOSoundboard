@@ -30,8 +30,7 @@ jobs:
           dotnet-version: '6.0.x'
       - name: Build Host
         run: dotnet build ASIOSoundboard
-      - name: Upload result
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3
           with:
             name: ASIOSoundboard
             path: ASIOSoundboard\bin\Release\net6.0-windows
