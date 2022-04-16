@@ -16,10 +16,10 @@ jobs:
           channel: 'stable'
       - run: git config --global url."https://".insteadOf git://
       - run: flutter --version
-      - working-directory: flutter-ui
+        working-directory: flutter-ui
       - run: flutter pub get
       # - run: powershell -Command "(gc D:\a\hk_launcher\hk_launcher\windows\flutter\ephemeral\.plugin_symlinks\system_theme\windows\system_theme_plugin.cpp) -replace 'GetDarkModeEnabled', 'GetAppDarkModeEnabled' | Out-File D:\a\hk_launcher\hk_launcher\windows\flutter\ephemeral\.plugin_symlinks\system_theme\windows\system_theme_plugin.cpp"
-      - working-directory: flutter-ui
+        working-directory: flutter-ui
       - run: flutter build windows
       - uses: actions/setup-dotnet@v2
         with:
