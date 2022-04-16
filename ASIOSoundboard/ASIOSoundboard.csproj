@@ -20,8 +20,4 @@
     <PackageReference Include="NAudio" Version="2.0.1" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /E /Y &quot;$(ProjectDir)flutter-ui\build\windows\runner\Release&quot; &quot;$(TargetDir)flutter-ui\&quot;&#xD;&#xA;xcopy /E /Y &quot;$(SolutionDir)ahk&quot; &quot;$(TargetDir)ahk\&quot;" />
-  </Target>
-
 </Project>

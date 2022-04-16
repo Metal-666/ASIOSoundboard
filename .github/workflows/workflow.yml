@@ -30,6 +30,9 @@ jobs:
           dotnet-version: '6.0.x'
       - name: Build Host
         run: dotnet build ASIOSoundboard
+      - name: Assemble final app
+        run: powershell Copy-Item -Path "flutter-ui\build\windows\runner\Release" -Destination "ASIOSoundboard\bin\Release\net6.0-windows\flutter-ui" -Recurse
+        run: powershell Copy-Item -Path "ahk" -Destination "ASIOSoundboard\bin\Release\net6.0-windows\ahk" -Recurse
       - uses: actions/upload-artifact@v3
         with:
           name: ASIOSoundboard
