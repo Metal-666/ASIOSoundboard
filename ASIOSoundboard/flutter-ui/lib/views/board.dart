@@ -1,6 +1,7 @@
 import 'package:asio_soundboard/util/extensions.dart';
 import 'package:asio_soundboard/views/board/tile_card_tutorial.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../bloc/root/bloc.dart';
 import '../bloc/root/state.dart';
@@ -108,33 +109,44 @@ class BoardView extends StatelessWidget {
 
   Widget _grid() => BlocBuilder<RootBloc, RootState>(
         builder: (rootContext, rootState) => BlocBuilder<BoardBloc, BoardState>(
-          builder: (context, state) => LayoutBuilder(
-            builder: (_, BoxConstraints constraints) {
-              final double desiredWidth = 70 * rootState.tileSize;
-              final int availableItemSpace =
-                  constraints.maxWidth ~/ desiredWidth;
-              final double finalWidth =
-                  constraints.maxWidth / availableItemSpace;
+          builder: (context, state) =>
+              state.soundboard?.tiles == null || state.soundboard!.tiles.isEmpty
+                  ? Center(
+                      child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: Text(
+                        'board.grid.press_the_button'.tr(),
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                    ))
+                  : LayoutBuilder(
+                      builder: (_, BoxConstraints constraints) {
+                        final double desiredWidth = 70 * rootState.tileSize;
+                        final int availableItemSpace =
+                            constraints.maxWidth ~/ desiredWidth;
+                        final double finalWidth =
+                            constraints.maxWidth / availableItemSpace;
 
-              return GridView.extent(
-                maxCrossAxisExtent: finalWidth,
-                crossAxisSpacing: 3,
-                mainAxisSpacing: 3,
-                children: List.generate(
-                  state.soundboard?.tiles.length ?? 0,
-                  (index) => _tile(
-                      context,
-                      state.soundboard?.tiles[index] ??
-                          const Tile(
-                            'null',
-                            'new_tile',
-                            1,
+                        return GridView.extent(
+                          primary: false,
+                          maxCrossAxisExtent: finalWidth,
+                          crossAxisSpacing: 3,
+                          mainAxisSpacing: 3,
+                          children: List.generate(
+                            state.soundboard?.tiles.length ?? 0,
+                            (index) => _tile(
+                                context,
+                                state.soundboard?.tiles[index] ??
+                                    const Tile(
+                                      'null',
+                                      'new_tile',
+                                      1,
+                                    ),
+                                finalWidth),
                           ),
-                      finalWidth),
-                ),
-              );
-            },
-          ),
+                        );
+                      },
+                    ),
         ),
       );
 
@@ -235,48 +247,59 @@ class BoardView extends StatelessWidget {
           height: 4,
         );
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            offset: Offset(2, 0),
-            blurRadius: 5,
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          _sideButton(
-            text: 'board.side_panel.save'.tr(),
-            onPressed: () => context.read<BoardBloc>().add(SaveSoundboard()),
+    return CustomScrollView(
+      primary: false,
+      slivers: <Widget>[
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              boxShadow: const <BoxShadow>[
+                BoxShadow(
+                  offset: Offset(2, 0),
+                  blurRadius: 5,
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _sideButton(
+                  text: 'board.side_panel.save'.tr(),
+                  onPressed: () =>
+                      context.read<BoardBloc>().add(SaveSoundboard()),
+                ),
+                _separator(),
+                _sideButton(
+                  text: 'board.side_panel.load'.tr(),
+                  onPressed: () =>
+                      context.read<BoardBloc>().add(LoadSoundboard()),
+                ),
+                const Divider(),
+                _sideButton(
+                  text: 'board.side_panel.stop_all_sounds'.tr(),
+                  onPressed: () =>
+                      context.read<BoardBloc>().add(StopAllSound()),
+                ),
+                const Expanded(child: SizedBox.shrink()),
+                // Glory to Ukraine :)
+                Text(
+                  'board.side_panel.russian_warship.part_1'.tr(),
+                  style: const TextStyle(color: Colors.blue),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  'board.side_panel.russian_warship.part_2'.tr(),
+                  style: const TextStyle(color: Colors.yellow),
+                  textAlign: TextAlign.center,
+                ),
+                _separator(),
+              ],
+            ),
           ),
-          _separator(),
-          _sideButton(
-            text: 'board.side_panel.load'.tr(),
-            onPressed: () => context.read<BoardBloc>().add(LoadSoundboard()),
-          ),
-          const Divider(),
-          _sideButton(
-            text: 'board.side_panel.stop_all_sounds'.tr(),
-            onPressed: () => context.read<BoardBloc>().add(StopAllSound()),
-          ),
-          const Expanded(child: SizedBox.shrink()),
-          // Glory to Ukraine :)
-          Text(
-            'board.side_panel.russian_warship.part_1'.tr(),
-            style: const TextStyle(color: Colors.blue),
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            'board.side_panel.russian_warship.part_2'.tr(),
-            style: const TextStyle(color: Colors.yellow),
-            textAlign: TextAlign.center,
-          ),
-          _separator(),
-        ],
-      ),
+        )
+      ],
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:system_theme/system_theme.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'bloc/board/bloc.dart';
 import 'bloc/board/events.dart' as board_events;
@@ -24,9 +25,17 @@ import 'views/settings.dart';
 final Color originalAccentColor = Colors.deepPurple[500]!;
 
 final Map<Bloc, bool> loadedBlocs = <Bloc, bool>{};
-void main() async {
+void main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await windowManager.ensureInitialized();
+
+  windowManager.waitUntilReadyToShow().then((_) async {
+    await windowManager.setMinimumSize(const Size(400, 200));
+    await windowManager.setSize(const Size(700, 400));
+    await windowManager.center();
+    await windowManager.show();
+  });
 
   await SystemTheme.accentColor.load();
 
@@ -35,10 +44,19 @@ void main() async {
 
   await settingsRepository.init();
 
-  final RootBloc rootBloc = RootBloc(clientRepository, settingsRepository);
-  final BoardBloc boardBloc = BoardBloc(clientRepository, settingsRepository);
-  final SettingsBloc settingsBloc =
-      SettingsBloc(clientRepository, settingsRepository);
+  final RootBloc rootBloc = RootBloc(
+    clientRepository,
+    settingsRepository,
+    preventAutostart: arguments.contains('-was-restarted'),
+  );
+  final BoardBloc boardBloc = BoardBloc(
+    clientRepository,
+    settingsRepository,
+  );
+  final SettingsBloc settingsBloc = SettingsBloc(
+    clientRepository,
+    settingsRepository,
+  );
 
   loadedBlocs.addAll(<Bloc, bool>{
     rootBloc: false,

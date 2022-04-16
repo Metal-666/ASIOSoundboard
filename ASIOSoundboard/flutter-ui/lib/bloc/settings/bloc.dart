@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:url_launcher/url_launcher.dart';
 
@@ -118,7 +119,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         await _settingsRepository.setAccentMode(
             SettingsState.accentModeConverter.inverse[event.accentMode]);
 
-        _clientRepository.reloadApp();
+        exit(1);
       }
     });
     on<PickCustomAccentColor>((event, emit) {
@@ -138,9 +139,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         await _settingsRepository
             .setCustomAccentColor(state.pickingAccentColor!.toHex());
 
-        _clientRepository.reloadApp();
-
-        emit(state.copyWith(pickingAccentColor: () => null));
+        exit(1);
       }
     });
     on<CancelPickingCustomAccentColor>(

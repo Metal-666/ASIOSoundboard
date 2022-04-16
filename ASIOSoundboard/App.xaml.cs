@@ -1,31 +1,51 @@
 ﻿using ASIOSoundboard.Audio;
+using ASIOSoundboard.Logging;
 using ASIOSoundboard.Web.Controllers;
 using ASIOSoundboard.Web.Modules;
 using EmbedIO;
 using EmbedIO.WebApi;
+using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace ASIOSoundboard {
 
 	public partial class App : Application {
 
-		private ILogger logger;
+		private const string UI_PATH = "flutter-ui/asio_soundboard.exe";
+
+		private ILogger? logger;
 
 		private WebServer? webServer;
 		private AudioManager? audioManager;
 
 		private MainWindow? window;
 
-		private void OnStartup(object sender, StartupEventArgs e) {
+		private CancellationTokenSource? uiYeeter;
 
-			ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddDebug());
+		private bool persistentHost = true;
+
+		private void OnStartup(object sender, StartupEventArgs startupEventArgs) {
+
+			window = new MainWindow();
+			window.Show();
+
+			ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddDebug().AddWindowLogger(configuration => {
+
+				configuration.MainWindow = window;
+
+			}));
 
 			logger = loggerFactory.CreateLogger<App>();
 
 			audioManager = new AudioManager(loggerFactory.CreateLogger<AudioManager>());
+
+			logger.LogInformation("Launching internal server...");
 
 			//Run the server
 			RunWebServer(loggerFactory);
@@ -33,10 +53,11 @@ namespace ASIOSoundboard {
 			//If we pass --no-ui parameter to the executable, no window will be created
 			//This was done so that I can run Flutter UI separately, with debugger enabled
 			//In prod --no-ui shouldn't be used
-			if(!e.Args.Contains("--no-ui")) {
+			if(!startupEventArgs.Args.Contains("--no-ui")) {
 
-				window = new MainWindow(e.Args.Contains("--no-flutter"));
-				window.Show();
+				persistentHost = false;
+
+				LaunchUI();
 
 			}
 
@@ -53,8 +74,6 @@ namespace ASIOSoundboard {
 				HostEventsModule hostEventsModule = new("/websockets", audioManager, loggerFactory.CreateLogger<HostEventsModule>());
 				CoreController coreController = new(audioManager, hostEventsModule, loggerFactory.CreateLogger<CoreController>());
 				PublicController publicController = new(audioManager, hostEventsModule, loggerFactory.CreateLogger<PublicController>());
-
-				coreController.OnAppReloadRequest += (sender, e) => window?.ReloadApp();
 
 				webServer = new WebServer((WebServerOptions options) => options
 						.WithUrlPrefix("http://localhost:29873/")
@@ -74,6 +93,102 @@ namespace ASIOSoundboard {
 
 			webServer?.Dispose();
 			audioManager?.Dispose();
+
+		}
+
+		private void LaunchUI() {
+
+			logger?.LogInformation("Waiting for UI to load...");
+
+			Task.Run(LaunchUIAsync);
+
+		}
+
+		private async Task LaunchUIAsync() {
+
+			List<string> arguments = new();
+
+			if(uiYeeter != null) {
+
+				uiYeeter.Cancel();
+
+				arguments.Add("-was-restarted");
+
+			}
+
+			Current.Dispatcher.Invoke(() => {
+
+				if(!persistentHost) {
+
+					window?.Hide();
+
+				}
+
+			});
+
+			uiYeeter = new CancellationTokenSource();
+
+			CommandResult result = await Command.Run(UI_PATH, arguments, options => options.CancellationToken(uiYeeter.Token)).Task;
+
+			if(result.Success) {
+
+				Dispatcher.Invoke(() => Shutdown());
+
+			}
+
+			else {
+
+				switch(result.ExitCode) {
+
+					case 1: {
+
+						await LaunchUIAsync();
+
+						break;
+
+					}
+
+					default: {
+
+						logger?.LogWarning("Did UI just crash??");
+
+						Current.Dispatcher.Invoke(() => {
+
+							window?.Show();
+
+						});
+
+						break;
+
+					}
+
+				}
+
+			}
+
+		}
+
+		private void CloseUI() {
+
+			uiYeeter?.Cancel();
+
+			uiYeeter = null;
+
+		}
+
+		public void ToggleUI() {
+
+			if(uiYeeter == null) {
+
+				LaunchUI();
+
+			}
+
+			else {
+
+				CloseUI();
+
+			}
 
 		}
 

@@ -28,6 +28,7 @@
 			}
 		},
 		"grid": {
+			"press_the_button": "Press the + button below to add a new tile!",
 			"tile": {
 				"delete": "Delete",
 				"edit": "Edit"

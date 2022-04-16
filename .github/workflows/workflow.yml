@@ -1,0 +1,29 @@
+name: Main workflow
+
+on: 
+  push:
+    branches:
+      # - main
+  workflow_dispatch:
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v2.3.0
+        with:
+          channel: 'stable'
+      - run: git config --global url."https://".insteadOf git://
+      - run: flutter --version
+      - run: flutter pub get
+      # - run: powershell -Command "(gc D:\a\hk_launcher\hk_launcher\windows\flutter\ephemeral\.plugin_symlinks\system_theme\windows\system_theme_plugin.cpp) -replace 'GetDarkModeEnabled', 'GetAppDarkModeEnabled' | Out-File D:\a\hk_launcher\hk_launcher\windows\flutter\ephemeral\.plugin_symlinks\system_theme\windows\system_theme_plugin.cpp"
+      - run: flutter build windows
+      - uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '6.0.x'
+      - run: dotnet build ASIOSoundboard
+      - uses: actions/upload-artifact@v3
+        with:
+         name: asio_soundboard
+         path: build/windows/runner/Release

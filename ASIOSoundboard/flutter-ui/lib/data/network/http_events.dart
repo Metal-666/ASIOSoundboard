@@ -18,7 +18,6 @@ enum CorePostRequest {
   fileResampleNeeded,
   saveFile,
   resampleFile,
-  reload,
 }
 
 enum PublicPostRequest {
@@ -48,7 +47,6 @@ final BiMap<String, CorePostRequest> corePostRequestConverter =
         'stop-audio-engine': CorePostRequest.stopAudioEngine,
         'save-file': CorePostRequest.saveFile,
         'resample-file': CorePostRequest.resampleFile,
-        'reload': CorePostRequest.reload,
       });
 
 final BiMap<String, PublicPostRequest> publicPostRequestConverter =

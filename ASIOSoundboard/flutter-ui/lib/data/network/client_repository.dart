@@ -157,12 +157,6 @@ class ClientRepository {
     );
   }
 
-  Future<void> reloadApp() {
-    log('Reloading app...');
-
-    return _makeCorePostRequest(CorePostRequest.reload);
-  }
-
   Future<String?> saveFile(
     String filter,
     String defaultExt,

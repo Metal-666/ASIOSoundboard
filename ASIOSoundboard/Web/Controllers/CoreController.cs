@@ -21,8 +21,6 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		private readonly HostEventsModule hostEventsModule;
 
-		public event EventHandler? OnAppReloadRequest;
-
 		public CoreController(AudioManager audioManager, HostEventsModule hostEventsModule, ILogger logger) {
 
 			this.audioManager = audioManager;
@@ -71,13 +69,13 @@ namespace ASIOSoundboard.Web.Controllers {
 		}
 
 		[Route(HttpVerbs.Get, "/pick-file")]
-		public async Task<Dictionary<string, string>> PickFile() {
+		public async Task<Dictionary<string, string?>> PickFile() {
 
 			logger.LogInformation("Picking a file");
 
 			string? file = await System.Windows.Application.Current.Dispatcher.Invoke(PickFileTask);
 
-			return new Dictionary<string, string>() {
+			return new Dictionary<string, string?>() {
 			
 				{ "file", file }
 				
@@ -229,15 +227,6 @@ namespace ASIOSoundboard.Web.Controllers {
 				logger.LogInformation("Can't resample file: one of parameters is null ({} @ {})", file, data.Get("rate"));
 
 			}
-
-		}
-
-		[Route(HttpVerbs.Post, "/reload")]
-		public void Reload() {
-
-			logger.LogInformation("Reloading app");
-
-			OnAppReloadRequest?.Invoke(this, new EventArgs());
 
 		}
 

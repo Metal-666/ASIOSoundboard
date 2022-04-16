@@ -427,7 +427,7 @@ namespace ASIOSoundboard.Audio {
 
 			public const string AUDIO_ENGINE = "audio_engine";
 
-			public class File : FileErrorEventArgs.File {
+			public new class File : FileErrorEventArgs.File {
 
 				public const string UNSUPPORTED_SAMPLE_RATE = "unsupported_sample_rate";
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/services.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../../data/settings/settings_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,12 +16,15 @@ class RootBloc extends Bloc<RootEvent, RootState> {
   final ClientRepository _clientRepository;
   final SettingsRepository _settingsRepository;
 
+  final bool preventAutostart;
+
   late final StreamSubscription<WebsocketMessage> _subscription;
 
   RootBloc(
     this._clientRepository,
-    this._settingsRepository,
-  ) : super(RootState(
+    this._settingsRepository, {
+    this.preventAutostart = false,
+  }) : super(RootState(
           0,
           null,
           false,
@@ -39,7 +43,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
             await _clientRepository
                 .setGlobalVolume(_settingsRepository.getGlobalVolume());
 
-            if (_settingsRepository.getAutoStartEngine()) {
+            if (_settingsRepository.getAutoStartEngine() && !preventAutostart) {
               await _clientRepository.startAudioEngine(
                 _settingsRepository.getAudioDevice(),
                 _settingsRepository.getSampleRate(),

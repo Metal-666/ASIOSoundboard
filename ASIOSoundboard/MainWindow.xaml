@@ -4,14 +4,26 @@
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:ASIOSoundboard"
-		xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
-        mc:Ignorable="d"
-		Title="ASIOSoundboard"
+		mc:Ignorable="d"
+		Title="ASIOSoundboard Host Controller"
 		Height="450"
 		Width="800"
 		MinHeight="300"
-		MinWidth="300">
-	<DockPanel>
-		<wv2:WebView2 Name="WebView" />
-	</DockPanel>
+		MinWidth="300"
+		Closed="OnClosed">
+	<Window.Resources>
+		<SolidColorBrush x:Key="AccentBrush" Color="#FF6E309C"/>
+	</Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="30">
+			</RowDefinition>
+			<RowDefinition Height="*">
+			</RowDefinition>
+		</Grid.RowDefinitions>
+		<StackPanel Orientation="Horizontal" Background="#FF2B2B2B">
+			<Button x:Name="StartStopUIButton" Click="OnStartStopUI" Content="Toggle UI" Padding="10, 5, 10, 5" Background="Black" Foreground="White" BorderBrush="{DynamicResource AccentBrush}"></Button>
+		</StackPanel>
+		<ListView x:Name="LogContainer" Grid.Row="1" Background="#FF1D1D1D" BorderBrush="{DynamicResource AccentBrush}" Foreground="#FFD4D4D4"></ListView>
+	</Grid>
 </Window>

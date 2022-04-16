@@ -1,33 +1,85 @@
-﻿using Microsoft.Web.WebView2.Core;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace ASIOSoundboard {
 
 	public partial class MainWindow : Window {
 
-		public MainWindow(bool noFlutter) {
+		public bool isClosed = false;
+
+		public MainWindow() {
 
 			InitializeComponent();
 
-			//If the --no-flutter flag was not found, open the UI
-			if(!noFlutter) {
+		}
 
-				//Wait till Edge is initialized, then disable the right-click menu and DevTools
-				WebView.CoreWebView2InitializationCompleted += (object? sender, CoreWebView2InitializationCompletedEventArgs args) => {
+		public void WriteLine(LogLevel logLevel, string text) {
 
-					WebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-					WebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+			if(!isClosed) {
 
-				};
+				Dispatcher.Invoke(() => LogContainer.Items.Add(new ListViewItem() {
 
-				WebView.Source = new Uri("http://localhost:29873/");
+					Content = text,
+					Foreground = new SolidColorBrush(LogLevelToColor(logLevel))
+
+				}));
 
 			}
 
 		}
 
-		public void ReloadApp() => WebView.Reload();
+		public Color LogLevelToColor(LogLevel logLevel) {
+
+			switch(logLevel) {
+
+				case LogLevel.Debug: {
+
+					return Colors.Gray;
+
+				}
+
+				case LogLevel.Warning: {
+
+					return Colors.Yellow;
+
+				}
+
+				case LogLevel.Error: {
+
+					return Colors.Red;
+
+				}
+
+				case LogLevel.Critical: {
+
+					return Colors.DarkRed;
+				
+				}
+
+				default: {
+
+					return Colors.White;
+
+				}
+
+			}
+
+		}
+
+		private void OnClosed(object sender, EventArgs e) {
+
+			isClosed = true;
+
+		}
+
+		private void OnStartStopUI(object sender, RoutedEventArgs e) {
+
+			((App) Application.Current).ToggleUI();
+
+		}
 
 	}
 
