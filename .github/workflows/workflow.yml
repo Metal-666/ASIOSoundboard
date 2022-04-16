@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v2.3.0
+        with:
+          channel: 'stable'
       - name: Configure Git
         run: git config --global url."https://".insteadOf git://
       - name: Configure Flutter
-        uses: subosito/flutter-action@v2.3.0
-          with:
-            channel: 'stable'
         run: flutter --version
       - name: Get dependencies
         run: flutter pub get
