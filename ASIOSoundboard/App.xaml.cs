@@ -150,9 +150,11 @@ namespace ASIOSoundboard {
 
 					default: {
 
-						logger?.LogWarning("Did UI just crash??");
+						logger?.LogWarning("Did UI just crash?? Exit code was {}", result.ExitCode);
 
 						Current.Dispatcher.Invoke(() => {
+
+							uiYeeter = null;
 
 							window?.Show();
 

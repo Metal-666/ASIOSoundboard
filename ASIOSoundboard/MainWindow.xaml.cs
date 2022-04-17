@@ -20,12 +20,37 @@ namespace ASIOSoundboard {
 
 			if(!isClosed) {
 
-				Dispatcher.Invoke(() => LogContainer.Items.Add(new ListViewItem() {
+				Dispatcher.Invoke(() => {
 
-					Content = text,
-					Foreground = new SolidColorBrush(LogLevelToColor(logLevel))
+					MenuItem copyButton = new() {
 
-				}));
+						Header = "Copy"
+
+					};
+
+					copyButton.Click += (sender, e) => {
+
+						Clipboard.SetText(text);
+
+					};
+
+					LogContainer.Items.Add(new ListViewItem() {
+
+						ContextMenu = new ContextMenu() {
+
+							Items = {
+
+								copyButton
+
+							}
+
+						},
+						Content = text,
+						Foreground = new SolidColorBrush(LogLevelToColor(logLevel))
+
+					});
+
+				});
 
 			}
 

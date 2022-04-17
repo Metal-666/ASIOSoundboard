@@ -2,8 +2,6 @@ name: Main workflow
 
 on: 
   push:
-    branches:
-      # - main
   workflow_dispatch:
       
 jobs:
@@ -21,7 +19,6 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
         working-directory: flutter-ui
-      # - run: powershell -Command "(gc D:\a\hk_launcher\hk_launcher\windows\flutter\ephemeral\.plugin_symlinks\system_theme\windows\system_theme_plugin.cpp) -replace 'GetDarkModeEnabled', 'GetAppDarkModeEnabled' | Out-File D:\a\hk_launcher\hk_launcher\windows\flutter\ephemeral\.plugin_symlinks\system_theme\windows\system_theme_plugin.cpp"
       - name: Build UI
         run: flutter build windows
         working-directory: flutter-ui
