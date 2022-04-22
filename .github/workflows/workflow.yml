@@ -15,23 +15,36 @@ jobs:
       - name: Configure Git
         run: git config --global url."https://".insteadOf git://
       - name: Configure Flutter
-        run: flutter --version
-      - name: Get dependencies
-        run: flutter pub get
+        run: |
+          flutter --version
+          flutter pub get
         working-directory: flutter-ui
       - name: Build UI
         run: flutter build windows
         working-directory: flutter-ui
-      - uses: actions/setup-dotnet@v2
+      - name: Build Host
+        uses: actions/setup-dotnet@v2
         with:
           dotnet-version: '6.0.x'
-      - name: Build Host
         run: dotnet build ASIOSoundboard --configuration Release
       - name: Assemble final app
         run: |
           powershell Copy-Item -Path "flutter-ui\build\windows\runner\Release" -Destination "ASIOSoundboard\bin\Release\net6.0-windows\flutter-ui" -Recurse
           powershell Copy-Item -Path "ahk" -Destination "ASIOSoundboard\bin\Release\net6.0-windows\ahk" -Recurse
-      - uses: actions/upload-artifact@v3
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
           name: ASIOSoundboard
           path: ASIOSoundboard\bin\Release\net6.0-windows
+      - name: Archive build
+        uses: papeloto/action-zip@v1
+        with:
+          files: ASIOSoundboard\bin\Release\net6.0-windows
+          dest: ASIOSoundboard-v{{ github.run_number }}.zip
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: ASIOSoundboard-v{{ github.run_number }}.zip
+          artifactErrorsFailBuild: true
+          tag: v${{ github.run_number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
