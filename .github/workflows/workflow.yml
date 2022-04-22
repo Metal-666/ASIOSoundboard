@@ -40,11 +40,11 @@ jobs:
         uses: papeloto/action-zip@v1
         with:
           files: ASIOSoundboard\bin\Release\net6.0-windows
-          dest: ASIOSoundboard-v{{ github.run_number }}.zip
+          dest: ASIOSoundboard-v${{ github.run_number }}.zip
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: ASIOSoundboard-v{{ github.run_number }}.zip
+          artifacts: ASIOSoundboard-v${{ github.run_number }}.zip
           artifactErrorsFailBuild: true
           tag: v${{ github.run_number }}
           token: ${{ secrets.GITHUB_TOKEN }}
