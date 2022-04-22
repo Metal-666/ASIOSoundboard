@@ -46,5 +46,6 @@ jobs:
         with:
           artifacts: ASIOSoundboard-v${{ github.run_number }}.zip
           artifactErrorsFailBuild: true
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
           tag: v${{ github.run_number }}
           token: ${{ secrets.GITHUB_TOKEN }}
