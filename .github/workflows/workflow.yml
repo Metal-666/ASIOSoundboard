@@ -42,6 +42,7 @@ jobs:
           files: ASIOSoundboard\bin\Release\net6.0-windows
           dest: ASIOSoundboard-v${{ github.run_number }}.zip
       - name: Release
+        if: github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/main'
         uses: ncipollo/release-action@v1
         with:
           artifacts: ASIOSoundboard-v${{ github.run_number }}.zip
