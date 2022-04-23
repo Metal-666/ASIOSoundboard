@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:asio_soundboard/bloc/settings/state.dart';
-import 'package:asio_soundboard/data/network/websocket_events.dart';
-import 'package:asio_soundboard/util/extensions.dart';
+import 'bloc/settings/state.dart';
+import 'data/network/websocket_events.dart';
+import 'util/extensions.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,9 +22,12 @@ import 'data/settings/settings_repository.dart';
 import 'views/board.dart';
 import 'views/settings.dart';
 
+// This accent color is used if accent mode is set to Original
 final Color originalAccentColor = Colors.deepPurple[500]!;
 
+// Keeps track of all loaded blocks
 final Map<Bloc, bool> loadedBlocs = <Bloc, bool>{};
+
 void main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -64,6 +67,7 @@ void main(List<String> arguments) async {
     settingsBloc: false,
   });
 
+  // Start the websocket client and wait until server acknowledges conncetion
   StreamSubscription? subscription;
   subscription = clientRepository.eventStream.stream.listen((event) async {
     switch (event.type) {
@@ -73,6 +77,7 @@ void main(List<String> arguments) async {
 
           final ThemeData theme = ThemeData.dark();
 
+          // Select accent color based on current settings
           Color accentColor;
 
           switch (SettingsState
@@ -105,6 +110,7 @@ void main(List<String> arguments) async {
               }
           }
 
+          // Actually start the app
           runApp(
             EasyLocalization(
               supportedLocales: const <Locale>[
@@ -116,37 +122,38 @@ void main(List<String> arguments) async {
               useOnlyLangCode: true,
               useFallbackTranslations: true,
               child: Builder(
-                  builder: (context) => MaterialApp(
-                        title: 'ASIOSoundboard',
-                        theme: theme.copyWith(
-                          colorScheme: theme.colorScheme.copyWith(
-                            primary: accentColor,
-                            secondary: Colors.white,
-                            onPrimary: accentColor.computeLuminance() > 0.5
-                                ? Colors.black
-                                : Colors.white,
-                            onSecondary: Colors.black,
-                          ),
-                          toggleableActiveColor: accentColor,
-                        ),
-                        localizationsDelegates: context.localizationDelegates,
-                        supportedLocales: context.supportedLocales,
-                        locale: context.locale,
-                        home: MultiRepositoryProvider(
-                          providers: [
-                            RepositoryProvider(
-                              create: (_) => clientRepository,
-                            ),
-                            RepositoryProvider(
-                              create: (_) => settingsRepository,
-                            ),
-                          ],
-                          child: BlocProvider<RootBloc>.value(
-                            value: rootBloc..add(AppLoaded()),
-                            child: Root(boardBloc, settingsBloc),
-                          ),
-                        ),
-                      )),
+                builder: (context) => MaterialApp(
+                  title: 'ASIOSoundboard',
+                  theme: theme.copyWith(
+                    colorScheme: theme.colorScheme.copyWith(
+                      primary: accentColor,
+                      secondary: Colors.white,
+                      onPrimary: accentColor.computeLuminance() > 0.5
+                          ? Colors.black
+                          : Colors.white,
+                      onSecondary: Colors.black,
+                    ),
+                    toggleableActiveColor: accentColor,
+                  ),
+                  localizationsDelegates: context.localizationDelegates,
+                  supportedLocales: context.supportedLocales,
+                  locale: context.locale,
+                  home: MultiRepositoryProvider(
+                    providers: [
+                      RepositoryProvider(
+                        create: (_) => clientRepository,
+                      ),
+                      RepositoryProvider(
+                        create: (_) => settingsRepository,
+                      ),
+                    ],
+                    child: BlocProvider<RootBloc>.value(
+                      value: rootBloc..add(AppLoaded()),
+                      child: Root(boardBloc, settingsBloc),
+                    ),
+                  ),
+                ),
+              ),
             ),
           );
 

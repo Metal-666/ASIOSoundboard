@@ -4,11 +4,11 @@ import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../main.dart';
 import 'http_events.dart';
 import 'websocket_events.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// This class acts as a client for the UI. It is used for connecting, disconnecting, sending and receiving messages from the host.
 class ClientRepository {
@@ -16,6 +16,7 @@ class ClientRepository {
   final Client _client = Client();
 
   // This event bus is subscribed to by the blocs and is used for handling UI updates coming from the server.
+  // Or at least that's how it worked in the past. Now it's used mainly for receiving error and backend status updates.
   final StreamController<WebsocketMessage> eventStream =
       StreamController<WebsocketMessage>.broadcast();
 
@@ -51,6 +52,8 @@ class ClientRepository {
     }
   }
 
+  // This should be called by each of the main blocs when they are initialized.
+  // If the bloc calling this was the last not initialized bloc, then a request is sent to the server, telling it that the app is fully initalized and ready to receive events.
   void notifyBlocLoaded(Bloc bloc) {
     if (!(loadedBlocs[bloc] ?? false)) {
       loadedBlocs[bloc] = true;
@@ -60,6 +63,8 @@ class ClientRepository {
       }
     }
   }
+
+  // Each of the following methods is used to send some kind of request to the server. Names of these methods should more or less match names of handlers in the server code.
 
   Future<List<String>?> listAudioDevices() {
     log('Retrieving audio devices...');

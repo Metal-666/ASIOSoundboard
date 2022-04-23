@@ -1,7 +1,7 @@
-import 'package:asio_soundboard/bloc/board/tile_tutorial/bloc.dart';
-import 'package:asio_soundboard/bloc/board/tile_tutorial/events.dart';
-import 'package:asio_soundboard/util/extensions.dart';
-import 'package:asio_soundboard/views/board/hero_tile.dart';
+import '../../bloc/board/tile_tutorial/bloc.dart';
+import '../../bloc/board/tile_tutorial/events.dart';
+import '../../util/extensions.dart';
+import 'hero_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,6 +12,9 @@ import '../../bloc/board/events.dart';
 import '../../bloc/board/tile_tutorial/state.dart';
 import '../../data/soundboard/soundboard.dart';
 
+/// Appears when user creates a tile for the first time.
+///
+/// Shows how to use the tile (left/right-click)
 class TileCardTutorial extends StatelessWidget {
   final Tile tile;
   final BoardBloc boardBloc;
@@ -41,7 +44,7 @@ class TileCardTutorial extends StatelessWidget {
               builder: (context, state) => Stack(
                 children: <Widget>[
                   _tutorialContent(),
-                  if (state.revealProgress >= 3) _mouseDetectorOverlay(context)
+                  if (state.revealProgress >= 3) _mouseDetectorOverlay(context),
                 ],
               ),
             ),
@@ -49,6 +52,7 @@ class TileCardTutorial extends StatelessWidget {
         ),
       );
 
+  // Best way to organize code! Throw functions inside functions! Yay! Good look understanding what is happening down there!
   Widget _tutorialContent() {
     Widget _middleSection() {
       Widget _sideText(String text) => Expanded(
@@ -243,6 +247,7 @@ class TileCardTutorial extends StatelessWidget {
     );
   }
 
+  /// Draws two invisible containers above everything. Containers detect when mouse hovers over them and emit respective events.
   Widget _mouseDetectorOverlay(BuildContext context) => Row(
         children: <Widget>[
           Expanded(

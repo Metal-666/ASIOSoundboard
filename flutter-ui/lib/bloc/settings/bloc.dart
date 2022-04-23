@@ -40,7 +40,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           null,
           false,
         )) {
-    // Start listening to the host events. We mainly want to know when the lists requested above arrive and when an Audio Device or Sample Rate updates are processed by the server.
     _subscription = _clientRepository.eventStream.stream
         .listen((WebsocketMessage message) => add(WebsocketEvent(message)));
 

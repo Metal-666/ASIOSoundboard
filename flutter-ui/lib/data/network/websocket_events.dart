@@ -33,8 +33,6 @@ final BiMap<String, WebsocketMessageType> websocketEventsConverter =
 /// Holds the data of a message.
 ///
 /// The fields of this class represent all possible data that could be sent from the host. In a specfic message, only a few of them will contain the actual data. When composing a message, we choose a named constructor that corresponds to the message type.
-///
-/// NOTE: The JSON serialization was initally generated using an extension called 'Dart Data Class Generator'. Any further modifications should be done manually, since the nullable fields are handled incorrectly by that extension.
 class WebsocketMessageData {
   bool? active;
 

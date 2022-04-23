@@ -187,7 +187,6 @@ class SettingsView extends StatelessWidget {
               ),
             ),
           ),
-          // This is why I love Dart. Just look at how beatiful and compact below code is. If you are not sure what it does, it creates a map (inline) where keys are the titles of each setting section and values are the widgets that represent the content of each card. Then it loops throught all the pairs and maps them to a list of Widgets that are created using the _settingsCard() function by passing the key and the value as the parameters.
           ...<String, Widget>{
             'settings.audio.header'.tr(): _audioSettings(),
             'settings.board.header'.tr(): _boardSettings(),
@@ -222,10 +221,11 @@ class SettingsView extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Builder(
-                    builder: (context) => Text(
-                          header,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        )),
+                  builder: (context) => Text(
+                    header,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
               ),
               Card(
                 elevation: 3,
@@ -239,7 +239,6 @@ class SettingsView extends StatelessWidget {
         ),
       );
 
-  /// Content of the Audio settings card.
   Widget _audioSettings() => BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) => _settingsSection(
           <MapEntry<String?, Widget?>>[
@@ -330,7 +329,6 @@ class SettingsView extends StatelessWidget {
         ),
       );
 
-  /// Content of the Board settings card.
   Widget _boardSettings() => BlocBuilder<RootBloc, RootState>(
         builder: (context, state) => _settingsSection(
           <MapEntry<String?, Widget?>>[
@@ -389,56 +387,60 @@ class SettingsView extends StatelessWidget {
           ],
         ),
       );
+
   Widget _uiSettings() => BlocBuilder<SettingsBloc, SettingsState>(
-      builder: (context, state) => _settingsSection(
-            <MapEntry<String?, Widget?>>[
-              MapEntry<String?, Widget?>(
-                'settings.ui.accent_color'.tr(),
-                Column(
-                  children: AccentMode.values
-                      .map<RadioListTile<AccentMode>>((mode) =>
-                          RadioListTile<AccentMode>(
-                            title: Text(
-                                'settings.ui.accent_colors.${mode.name}'.tr()),
-                            value: mode,
-                            groupValue: state.accentMode,
-                            onChanged: (value) => context
-                                .read<SettingsBloc>()
-                                .add(AccentModeChanged(value)),
-                            secondary: mode == AccentMode.custom
-                                ? IconButton(
-                                    icon: const Icon(Icons.color_lens),
-                                    onPressed: () => context
-                                        .read<SettingsBloc>()
-                                        .add(PickCustomAccentColor()),
-                                  )
-                                : null,
-                          ))
-                      .toList(),
-                ),
+        builder: (context, state) => _settingsSection(
+          <MapEntry<String?, Widget?>>[
+            MapEntry<String?, Widget?>(
+              'settings.ui.accent_color'.tr(),
+              Column(
+                children: AccentMode.values
+                    .map<RadioListTile<AccentMode>>(
+                      (mode) => RadioListTile<AccentMode>(
+                        title:
+                            Text('settings.ui.accent_colors.${mode.name}'.tr()),
+                        value: mode,
+                        groupValue: state.accentMode,
+                        onChanged: (value) => context
+                            .read<SettingsBloc>()
+                            .add(AccentModeChanged(value)),
+                        secondary: mode == AccentMode.custom
+                            ? IconButton(
+                                icon: const Icon(Icons.color_lens),
+                                onPressed: () => context
+                                    .read<SettingsBloc>()
+                                    .add(PickCustomAccentColor()),
+                              )
+                            : null,
+                      ),
+                    )
+                    .toList(),
               ),
-              MapEntry<String?, Widget?>(
-                'settings.ui.language'.tr(),
-                DropdownButton<String>(
-                  value: context.locale.languageCode,
-                  onChanged: (value) {
-                    if (value != null) {
-                      context.setLocale(Locale(value));
-                    }
-                  },
-                  items: context.supportedLocales
-                      .map<DropdownMenuItem<String>>(
-                          (locale) => DropdownMenuItem(
-                                value: locale.languageCode,
-                                child: Text(
-                                    'settings.ui.languages.${locale.languageCode}'
-                                        .tr()),
-                              ))
-                      .toList(),
-                ),
+            ),
+            MapEntry<String?, Widget?>(
+              'settings.ui.language'.tr(),
+              DropdownButton<String>(
+                value: context.locale.languageCode,
+                onChanged: (value) {
+                  if (value != null) {
+                    context.setLocale(Locale(value));
+                  }
+                },
+                items: context.supportedLocales
+                    .map<DropdownMenuItem<String>>(
+                      (locale) => DropdownMenuItem(
+                        value: locale.languageCode,
+                        child: Text(
+                            'settings.ui.languages.${locale.languageCode}'
+                                .tr()),
+                      ),
+                    )
+                    .toList(),
               ),
-            ],
-          ));
+            ),
+          ],
+        ),
+      );
 
   Widget _developerSettings() => BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) => Column(
@@ -450,7 +452,9 @@ class SettingsView extends StatelessWidget {
 
   Widget _settingsSection(List<MapEntry<String?, Widget?>> elements) => Column(
         children: elements
-            .map<Column>((e) => Column(children: <Widget>[
+            .map<Column>(
+              (e) => Column(
+                children: <Widget>[
                   if (e.key != null)
                     Builder(
                         builder: (context) => Text(
@@ -459,7 +463,9 @@ class SettingsView extends StatelessWidget {
                             )),
                   if (e.value != null) e.value!,
                   const SizedBox(height: 20),
-                ]))
+                ],
+              ),
+            )
             .toList()
           ..last.children.removeLast(),
       );
@@ -476,26 +482,27 @@ class SettingsView extends StatelessWidget {
     required void Function() onPressed,
   }) =>
       Builder(
-          builder: (context) => GestureDetector(
-                onTapDown: (details) => onPressed(),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: const BorderRadius.all(Radius.circular(5)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.all(5),
-                        child: icon,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(5),
-                        child: label,
-                      ),
-                    ],
-                  ),
+        builder: (context) => GestureDetector(
+          onTapDown: (details) => onPressed(),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: const BorderRadius.all(Radius.circular(5)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(5),
+                  child: icon,
                 ),
-              ));
+                Padding(
+                  padding: const EdgeInsets.all(5),
+                  child: label,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 }

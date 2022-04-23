@@ -41,7 +41,6 @@ class Tile {
   Tile copyWith({
     String? Function()? filePath,
     String? Function()? name,
-    String? Function()? id,
     double? Function()? volume,
   }) =>
       Tile(

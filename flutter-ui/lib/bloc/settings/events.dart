@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:asio_soundboard/bloc/settings/state.dart';
+import 'state.dart';
 
 import '../../data/network/websocket_events.dart';
 

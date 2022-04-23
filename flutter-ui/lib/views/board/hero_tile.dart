@@ -1,6 +1,7 @@
-import 'package:asio_soundboard/util/extensions.dart';
+import '../../util/extensions.dart';
 import 'package:flutter/material.dart';
 
+/// What does this do, again? Probably draws a pseudo-tile when the hero animation is playing
 class HeroTile extends StatelessWidget {
   final String? name;
 

@@ -1,7 +1,6 @@
-import 'package:asio_soundboard/util/extensions.dart';
-import 'package:asio_soundboard/views/board/tile_card_tutorial.dart';
+import '../util/extensions.dart';
+import 'board/tile_card_tutorial.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:window_manager/window_manager.dart';
 
 import '../bloc/root/bloc.dart';
 import '../bloc/root/state.dart';
@@ -81,7 +80,7 @@ class BoardView extends StatelessWidget {
               SizedBox(
                 width: 150,
                 child: _sidePanel(context),
-              )
+              ),
             ],
           ),
         ),
@@ -113,12 +112,13 @@ class BoardView extends StatelessWidget {
               state.soundboard?.tiles == null || state.soundboard!.tiles.isEmpty
                   ? Center(
                       child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: Text(
-                        'board.grid.press_the_button'.tr(),
-                        style: Theme.of(context).textTheme.headlineMedium,
+                        padding: const EdgeInsets.all(40),
+                        child: Text(
+                          'board.grid.press_the_button'.tr(),
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
                       ),
-                    ))
+                    )
                   : LayoutBuilder(
                       builder: (_, BoxConstraints constraints) {
                         final double desiredWidth = 70 * rootState.tileSize;
@@ -135,14 +135,15 @@ class BoardView extends StatelessWidget {
                           children: List.generate(
                             state.soundboard?.tiles.length ?? 0,
                             (index) => _tile(
-                                context,
-                                state.soundboard?.tiles[index] ??
-                                    const Tile(
-                                      'null',
-                                      'new_tile',
-                                      1,
-                                    ),
-                                finalWidth),
+                              context,
+                              state.soundboard?.tiles[index] ??
+                                  const Tile(
+                                    'null',
+                                    'new_tile',
+                                    1,
+                                  ),
+                              finalWidth,
+                            ),
                           ),
                         );
                       },
@@ -170,6 +171,7 @@ class BoardView extends StatelessWidget {
                 primary: Theme.of(context).colorScheme.onSecondary),
           ),
         );
+
     Widget _backDivider() => Divider(
           height: 1,
           thickness: 0,
@@ -298,7 +300,7 @@ class BoardView extends StatelessWidget {
               ],
             ),
           ),
-        )
+        ),
       ],
     );
   }

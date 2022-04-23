@@ -16,9 +16,13 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
 
   late final StreamSubscription<WebsocketMessage> _subscription;
 
-  BoardBloc(this._clientRepository, this._settingsRepository)
-      : super(const BoardState(null, null)) {
-    // Start listening to the host events. We are mainly insterested in events related to soundboard state, for example creation or deletion of a Tile.
+  BoardBloc(
+    this._clientRepository,
+    this._settingsRepository,
+  ) : super(const BoardState(
+          null,
+          null,
+        )) {
     _subscription = _clientRepository.eventStream.stream
         .listen((WebsocketMessage message) => add(WebsocketEvent(message)));
 

@@ -2,13 +2,11 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/services.dart';
-import 'package:window_manager/window_manager.dart';
-
-import '../../data/settings/settings_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../data/network/websocket_events.dart';
 import '../../data/network/client_repository.dart';
+import '../../data/network/websocket_events.dart';
+import '../../data/settings/settings_repository.dart';
 import 'events.dart';
 import 'state.dart';
 
@@ -30,7 +28,6 @@ class RootBloc extends Bloc<RootEvent, RootState> {
           false,
           tileSize: _settingsRepository.getTileSize(),
         )) {
-    // Start listening to the host events. We are mainly interested in global changes like stopping and starting the Audio Engine, and also errors and other notifications.
     _subscription = _clientRepository.eventStream.stream
         .listen((WebsocketMessage message) => add(WebsocketEvent(message)));
 
@@ -60,11 +57,13 @@ class RootBloc extends Bloc<RootEvent, RootState> {
             if (active != null) {
               emit(state.copyWith(isAudioEngineRunning: () => active));
             }
+
             break;
           }
         case WebsocketMessageType.error:
           {
             emit(state.copyWith(error: () => event.message.data?.error));
+
             break;
           }
         default:

@@ -7,7 +7,7 @@ import '../../bloc/board/bloc.dart';
 import '../../bloc/board/events.dart';
 import '../../bloc/board/state.dart';
 
-/// Dialog that appears when user wants to add a new tile.
+/// Dialog that appears when user wants to add a new tile/edit a tile.
 class TileDialog extends HookWidget {
   const TileDialog({Key? key}) : super(key: key);
 
@@ -33,7 +33,7 @@ class TileDialog extends HookWidget {
             child: Text('board.tile_dialog.actions.done'.tr()),
             onPressed: () =>
                 context.read<BoardBloc>().add(TileDialogSubmitted()),
-          )
+          ),
         ],
       );
 
@@ -110,7 +110,7 @@ class TileDialog extends HookWidget {
                     onPressed: () =>
                         context.read<BoardBloc>().add(PickTilePath()),
                     child: Text('board.tile_dialog.path.browse'.tr()),
-                  )
+                  ),
                 ],
               ),
               _spacer(),
@@ -144,8 +144,10 @@ class TileDialog extends HookWidget {
     );
   }
 
-  void _overwriteControllerText(TextEditingController controller,
-      [String? newText]) {
+  void _overwriteControllerText(
+    TextEditingController controller, [
+    String? newText,
+  ]) {
     controller
       ..text = newText ?? ''
       ..selection = TextSelection.fromPosition(
