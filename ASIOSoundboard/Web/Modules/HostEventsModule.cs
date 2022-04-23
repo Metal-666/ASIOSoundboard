@@ -88,7 +88,7 @@ namespace ASIOSoundboard.Web.Modules {
 			if(message?["event"] != null) {
 
 				//Depending on the event type, do different stuff
-				//The purpose of each command should be pretty self-explanatory from it's name.
+				//The purpose of each command should be pretty self-explanatory, based on its name
 				switch(message["event"].GetString()) {
 
 					case "app_loaded": {

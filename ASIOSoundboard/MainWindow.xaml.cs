@@ -8,6 +8,7 @@ namespace ASIOSoundboard {
 
 	public partial class MainWindow : Window {
 
+		// Why is this not a standard property on a Window class??
 		public bool isClosed = false;
 
 		public MainWindow() {
@@ -18,45 +19,49 @@ namespace ASIOSoundboard {
 
 		public void WriteLine(LogLevel logLevel, string text) {
 
-			if(!isClosed) {
+			// Sometimes logs can be printed when the Host is already shutting down and this window is closed
+			// If that's the case - don't print anything
+			if(isClosed) {
 
-				Dispatcher.Invoke(() => {
+				return;
+			
+			}
 
-					MenuItem copyButton = new() {
+			Dispatcher.Invoke(() => {
 
-						Header = "Copy"
+				MenuItem copyButton = new() {
 
-					};
+					Header = "Copy"
 
-					copyButton.Click += (sender, e) => {
+				};
 
-						Clipboard.SetText(text);
+				copyButton.Click += (sender, e) => {
 
-					};
+					Clipboard.SetText(text);
 
-					LogContainer.Items.Add(new ListViewItem() {
+				};
 
-						ContextMenu = new ContextMenu() {
+				LogContainer.Items.Add(new ListViewItem() {
 
-							Items = {
+					ContextMenu = new ContextMenu() {
 
-								copyButton
+						Items = {
 
-							}
+							copyButton
 
-						},
-						Content = text,
-						Foreground = new SolidColorBrush(LogLevelToColor(logLevel))
+						}
 
-					});
+					},
+					Content = text,
+					Foreground = new SolidColorBrush(LogLevelToColor(logLevel))
 
 				});
 
-			}
+			});
 
 		}
 
-		public Color LogLevelToColor(LogLevel logLevel) {
+		public static Color LogLevelToColor(LogLevel logLevel) {
 
 			switch(logLevel) {
 

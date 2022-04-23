@@ -36,10 +36,6 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		#region Verb: POST
 
-		/// <summary>
-		/// Plays a sound from a Tile (or all tiles, if multiple where found) with the provided name.
-		/// </summary>
-		/// <param name="selector">The name of the Tile.</param>
 		[Route(HttpVerbs.Post, "/play")]
 		public void Play([FormData] NameValueCollection data) {
 
@@ -70,9 +66,6 @@ namespace ASIOSoundboard.Web.Controllers {
 
 		}
 
-		/// <summary>
-		/// Stops all sounds.
-		/// </summary>
 		[Route(HttpVerbs.Post, "/stop")]
 		public void Stop() {
 

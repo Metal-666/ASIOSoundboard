@@ -26,9 +26,11 @@ namespace ASIOSoundboard {
 
 		private MainWindow? window;
 
+		// Cancelling this token closes the UI (if the UI was not started, the token will be null)
 		private CancellationTokenSource? uiYeeter;
 
-		private bool persistentHost = true;
+		// This indicates if Host window should stay when the UI is launched
+		private bool persistentHost = false;
 
 		private void OnStartup(object sender, StartupEventArgs startupEventArgs) {
 
@@ -47,26 +49,22 @@ namespace ASIOSoundboard {
 
 			logger.LogInformation("Launching internal server...");
 
-			//Run the server
 			RunWebServer(loggerFactory);
 
-			//If we pass --no-ui parameter to the executable, no window will be created
-			//This was done so that I can run Flutter UI separately, with debugger enabled
-			//In prod --no-ui shouldn't be used
-			if(!startupEventArgs.Args.Contains("--no-ui")) {
+			// If we pass --no-ui parameter to the executable, the Host window will not start the UI
+			// This is useful for situations where you want to debug the UI separately
+			if(startupEventArgs.Args.Contains("--no-ui")) {
 
-				persistentHost = false;
+				persistentHost = true;
 
-				LaunchUI();
+				return;
 
 			}
+			
+			LaunchUI();
 
 		}
 
-		/// <summary>
-		/// Starts the web server.
-		/// </summary>
-		/// <param name="loggerFactory">Used to create loggers for controllers used by the server.</param>
 		private void RunWebServer(ILoggerFactory loggerFactory) {
 
 			if(audioManager != null) {
@@ -108,6 +106,9 @@ namespace ASIOSoundboard {
 
 			List<string> arguments = new();
 
+			// Running LaunchUIAsync without closing the UI first indicates that we want to restart it
+			// Therefore we close the UI and add a -was-restarted startup argument so that the UI knows, that it was restarted when it is launched again
+			// If UI sees -was-restarted argument, it knows that the Host is already running and it doesn't need to tell it to do any initialization
 			if(uiYeeter != null) {
 
 				uiYeeter.Cancel();
@@ -118,6 +119,7 @@ namespace ASIOSoundboard {
 
 			Current.Dispatcher.Invoke(() => {
 
+				// If the persistentHost flag is set, we don't hide the Host before showing the UI
 				if(!persistentHost) {
 
 					window?.Hide();
@@ -126,10 +128,13 @@ namespace ASIOSoundboard {
 
 			});
 
+			// Start the UI
 			uiYeeter = new CancellationTokenSource();
 
 			CommandResult result = await Command.Run(UI_PATH, arguments, options => options.CancellationToken(uiYeeter.Token)).Task;
 
+			// After the UI was closed, we look at the exit code
+			// If the exit code is 0 (meaning the UI was exited normally), we simply shutdown everything
 			if(result.Success) {
 
 				Dispatcher.Invoke(() => Shutdown());
@@ -140,6 +145,8 @@ namespace ASIOSoundboard {
 
 				switch(result.ExitCode) {
 
+					// If exit code is 1, we know that the UI was closed with an intent to be restarted (for example to apply theme changes)
+					// So we restart it
 					case 1: {
 
 						await LaunchUIAsync();
@@ -148,6 +155,8 @@ namespace ASIOSoundboard {
 
 					}
 
+					// Any other exit code (for now) indicates that an error has occured when exiting
+					// So we print the error to the Host console
 					default: {
 
 						logger?.LogWarning("Did UI just crash?? Exit code was {}", result.ExitCode);

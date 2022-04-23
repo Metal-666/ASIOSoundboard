@@ -10,7 +10,7 @@ namespace ASIOSoundboard.Logging {
 
 		public WindowLogger(string name, Func<WindowLoggerConfiguration> getCurrentConfig) => (_name, _getCurrentConfig) = (name, getCurrentConfig);
 
-		public IDisposable BeginScope<TState>(TState state) => default;
+		public IDisposable BeginScope<TState>(TState state) => default!;
 
 		public bool IsEnabled(LogLevel logLevel) => true;
 

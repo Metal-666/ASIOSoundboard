@@ -17,7 +17,10 @@ namespace ASIOSoundboard.Audio {
 
 		private readonly ILogger<AudioManager> logger;
 
+		// Emitted when the Audio Engine is started or stopped
 		public event EventHandler<AudioEngineStatusEventArgs>? OnAudioEngineStatus;
+		// Emitted when and error occurs during playback, resampling, etc
+		// See error classes at the bottom to get an idea of possible errors
 		public event EventHandler<ErrorEventArgs>? OnError;
 
 		private AsioOut? asioOut;
@@ -26,6 +29,9 @@ namespace ASIOSoundboard.Audio {
 
 		public AudioManager(ILogger<AudioManager> logger) => this.logger = logger;
 
+		/// <summary>
+		/// Called when we want to update the UI with new Audio Engine status
+		/// </summary>
 		public void AudioEngineStatus() => OnAudioEngineStatus?.Invoke(this, new AudioEngineStatusEventArgs() {
 
 			Active = asioOut != null,
@@ -67,7 +73,18 @@ namespace ASIOSoundboard.Audio {
 
 			}
 
-			else if(GetASIODevices().Contains(audioDevice)) {
+			else if(!GetASIODevices().Contains(audioDevice)) {
+
+				OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
+
+					Subject = AudioEngineErrorEventArgs.AUDIO_DEVICE,
+					Error = AudioEngineErrorEventArgs.AudioDevice.NOT_FOUND
+
+				});
+
+			}
+
+			else {
 
 				Application.Current.Dispatcher.Invoke(() => {
 
@@ -75,7 +92,21 @@ namespace ASIOSoundboard.Audio {
 
 						asioOut = new AsioOut(audioDevice);
 
-						if(asioOut.IsSampleRateSupported((int) sampleRate)) {
+						if(!asioOut.IsSampleRateSupported((int) sampleRate)) {
+
+							OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
+
+								Subject = AudioEngineErrorEventArgs.SAMPLE_RATE,
+								Error = AudioEngineErrorEventArgs.SampleRate.NOT_SUPPORTED,
+								Device = audioDevice
+
+							});
+
+							Dispose();
+
+						}
+
+						else {
 
 							mixingSampleProvider = new(WaveFormat.CreateIeeeFloatWaveFormat((int) sampleRate, 2)) {
 
@@ -99,20 +130,6 @@ namespace ASIOSoundboard.Audio {
 
 						}
 
-						else {
-
-							OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
-
-								Subject = AudioEngineErrorEventArgs.SAMPLE_RATE,
-								Error = AudioEngineErrorEventArgs.SampleRate.NOT_SUPPORTED,
-								Device = audioDevice
-
-							});
-
-							Dispose();
-
-						}
-
 					}
 
 					catch(Exception e) {
@@ -126,17 +143,6 @@ namespace ASIOSoundboard.Audio {
 						Dispose();
 
 					}
-
-				});
-
-			}
-
-			else {
-
-				OnError?.Invoke(this, new AudioEngineErrorEventArgs() {
-
-					Subject = AudioEngineErrorEventArgs.AUDIO_DEVICE,
-					Error = AudioEngineErrorEventArgs.AudioDevice.NOT_FOUND
 
 				});
 
@@ -174,7 +180,7 @@ namespace ASIOSoundboard.Audio {
 		/// Plays a sound clip located at a specific path.
 		/// </summary>
 		/// <param name="file">The path to the file.</param>
-		/// <param name="tile">Optional reference to the Tile that was clicked. If provided, makes it possible to change the volume of this sound.</param>
+		/// <param name="volume">Desired volume.</param>
 		public void PlayFile(string? file, float volume = 1) {
 
 			logger.LogInformation("Preparing to play audio file: {}", file);
@@ -240,7 +246,7 @@ namespace ASIOSoundboard.Audio {
 
 				WaveFileWriter.CreateWaveFile(fileInfo.FullName.Replace(fileInfo.Extension, ".wav"), resampler);
 
-				//After the file was saved, opens a new Explorer window and points it to the folder. Might be unwanted so I will probably add a toggle to disable this in the future.
+				//After the file was saved, opens a new Explorer window and points it to the folder. Might be a bit intrusive so I will probably add a toggle to disable this in the future.
 				Process.Start("explorer.exe", Path.GetDirectoryName(file)!);
 
 			}
@@ -336,10 +342,16 @@ namespace ASIOSoundboard.Audio {
 
 		}
 
+		/// <summary>
+		/// Makes sure the provided volume is within acceptable range
+		/// </summary>
+		/// <param name="volume">Volume that needs to be normalized.</param>
+		/// <returns>Normalized volume.</returns>
 		private static float TransformVolume(float volume) {
 
 			volume = Math.Clamp(volume, 0.0f, 2.0f);
 
+			// Don't ask me how I came up with this formula
 			return (float) (1.7 * Math.Pow(volume, 1.8) - Math.Pow(volume, 1.6));
 
 		}
